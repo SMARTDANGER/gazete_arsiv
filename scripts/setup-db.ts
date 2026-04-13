@@ -40,6 +40,11 @@ async function setup() {
       );
     `;
 
+    console.log('Adding status/page_count columns to issues...');
+    await sql`ALTER TABLE issues ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'`;
+    await sql`ALTER TABLE issues ADD COLUMN IF NOT EXISTS page_count INTEGER`;
+    await sql`UPDATE issues SET status = 'pending' WHERE status IN ('error','processing') OR status IS NULL`;
+
     console.log('Creating GIN index on pages.ocr_text...');
     // Create the index if it doesn't already exist.
     // PostgreSQL string escaping and conditional creation for index

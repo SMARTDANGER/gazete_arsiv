@@ -209,6 +209,29 @@ export default function AdminDashboard() {
   }, [activeTab, selectedSourceId, fetchProgress, stopPolling]);
 
   // ----- Tab 3 Actions -----
+  const processIssuePages = async (issueId: number, label?: string) => {
+    const prep = await fetch('/api/process-issue', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ issue_id: issueId })
+    });
+    const prepData = await prep.json();
+    if (prepData.error) throw new Error(prepData.error);
+    const pageCount: number = prepData.page_count;
+    const tag = label ? `${label} (ID ${issueId})` : `Issue ${issueId}`;
+
+    for (let page = 1; page <= pageCount; page++) {
+      setOcrResult(`${tag}: sayfa ${page}/${pageCount} işleniyor...`);
+      const res = await fetch('/api/process-page', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ issue_id: issueId, page_number: page })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(`sayfa ${page}: ${data.error}`);
+      fetchProgress();
+    }
+    return pageCount;
+  };
+
   const runBatchOcr = async () => {
     if (!selectedSourceId) return;
     setOcrLoading(true); setOcrResult('');
@@ -219,8 +242,24 @@ export default function AdminDashboard() {
         body: JSON.stringify({ source_id: Number(selectedSourceId), limit: batchLimit })
       });
       const data = await res.json();
-      if (data.error) setOcrResult(`Hata: ${data.error}`);
-      else setOcrResult(`${data.processed} sayı başarıyla işlendi. Hatalar: ${data.errors.length}`);
+      if (data.error) throw new Error(data.error);
+
+      const issues: { id: number; date_label: string }[] = data.issues || [];
+      if (issues.length === 0) {
+        setOcrResult('İşlenecek sayı bulunamadı.');
+      } else {
+        let processed = 0;
+        const errors: string[] = [];
+        for (const issue of issues) {
+          try {
+            await processIssuePages(issue.id, issue.date_label);
+            processed++;
+          } catch (e: any) {
+            errors.push(`Issue ${issue.id}: ${e.message}`);
+          }
+        }
+        setOcrResult(`${processed}/${issues.length} sayı tamamlandı. Hata: ${errors.length}${errors.length ? '\n' + errors.join('\n') : ''}`);
+      }
     } catch(e: any) { setOcrResult(`Hata: ${e.message}`); }
     setOcrLoading(false);
     fetchProgress();
@@ -230,15 +269,11 @@ export default function AdminDashboard() {
     if (!manualIssueId) return;
     setOcrLoading(true); setOcrResult('');
     try {
-      const res = await fetch('/api/process-issue', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ issue_id: Number(manualIssueId) })
-      });
-      const data = await res.json();
-      if (data.error) setOcrResult(`Hata: ${data.error}`);
-      else setOcrResult(`İşlem tamamlandı. ${data.pages_processed} sayfa eklendi.`);
+      const pages = await processIssuePages(Number(manualIssueId));
+      setOcrResult(`İşlem tamamlandı. ${pages} sayfa eklendi.`);
     } catch(e: any) { setOcrResult(`Hata: ${e.message}`); }
     setOcrLoading(false);
+    fetchProgress();
   };
 
   return (

@@ -1,0 +1,127 @@
+import { sql } from '@vercel/postgres';
+import sharp from 'sharp';
+
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
+let cachedWasm: Uint8Array | null = null;
+let cachedModel: Uint8Array | null = null;
+const pdfCache = new Map<number, Buffer>();
+
+async function getWasm(): Promise<Uint8Array> {
+  if (cachedWasm) return cachedWasm;
+  const { loadWasmBinary } = await import('tesseract-wasm/node');
+  cachedWasm = await loadWasmBinary();
+  return cachedWasm;
+}
+
+async function getModel(): Promise<Uint8Array> {
+  if (cachedModel) return cachedModel;
+  const r = await fetch('https://github.com/tesseract-ocr/tessdata_fast/raw/main/tur.traineddata');
+  if (!r.ok) throw new Error('Model fetch failed: ' + r.status);
+  cachedModel = new Uint8Array(await r.arrayBuffer());
+  return cachedModel;
+}
+
+async function getPdfBuffer(issueId: number, pdfUrl: string): Promise<Buffer> {
+  const hit = pdfCache.get(issueId);
+  if (hit) return hit;
+  const response = await fetch(pdfUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+  });
+  if (!response.ok) throw new Error('PDF fetch failed: ' + response.status);
+  const buf = Buffer.from(await response.arrayBuffer());
+  pdfCache.set(issueId, buf);
+  return buf;
+}
+
+export async function POST(request: Request) {
+  try {
+    const { issue_id, page_number } = await request.json();
+    if (!issue_id || !page_number) {
+      return Response.json({ error: 'issue_id and page_number required' }, { status: 400 });
+    }
+
+    const { rows } = await sql`SELECT pdf_url, page_count FROM issues WHERE id = ${issue_id}`;
+    if (!rows.length) return Response.json({ error: 'Issue not found' }, { status: 404 });
+    const { pdf_url, page_count } = rows[0];
+
+    const pdfBuffer = await getPdfBuffer(issue_id, pdf_url);
+    const mupdf = await import('mupdf');
+    const doc = mupdf.Document.openDocument(pdfBuffer, 'application/pdf');
+
+    if (page_number < 1 || page_number > doc.countPages()) {
+      doc.destroy();
+      return Response.json({ error: 'page_number out of range' }, { status: 400 });
+    }
+
+    const page = doc.loadPage(page_number - 1);
+    const matrix = mupdf.Matrix.scale(2, 2);
+    const pixmap = page.toPixmap(matrix, mupdf.ColorSpace.DeviceRGB, false, true);
+    const pngBuffer = Buffer.from(pixmap.asPNG());
+    pixmap.destroy();
+    page.destroy();
+    doc.destroy();
+
+    const processed = await sharp(pngBuffer)
+      .grayscale()
+      .resize({ width: 2000, withoutEnlargement: true })
+      .normalise()
+      .sharpen(1.5)
+      .toBuffer();
+
+    const { createOCREngine } = await import('tesseract-wasm');
+    const wasmBinary = await getWasm();
+    const modelData = await getModel();
+
+    const engine = await createOCREngine({ wasmBinary });
+    engine.loadModel(modelData);
+
+    const { data, info } = await sharp(processed)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    engine.loadImage({
+      data: new Uint8Array(data.buffer, data.byteOffset, data.byteLength),
+      width: info.width,
+      height: info.height,
+    });
+    const text: string = engine.getText();
+    engine.destroy();
+
+    const cleaned = text
+      .replace(/([A-Za-zçğışöüÇĞİÖŞÜ])\.\s*(?=[A-Za-zçğışöüÇĞİÖŞÜ]\.)/g, '$1')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    await sql`
+      INSERT INTO pages (issue_id, page_number, ocr_text)
+      VALUES (${issue_id}, ${page_number}, ${cleaned})
+      ON CONFLICT DO NOTHING
+    `;
+
+    const { rows: cntRows } = await sql`SELECT COUNT(*)::int AS done FROM pages WHERE issue_id = ${issue_id}`;
+    const done = cntRows[0].done;
+    const total = page_count ?? 0;
+
+    let status: 'completed' | 'partial' | 'pending' = 'pending';
+    if (total > 0 && done >= total) status = 'completed';
+    else if (done > 0) status = 'partial';
+    await sql`UPDATE issues SET status = ${status} WHERE id = ${issue_id}`;
+
+    const remaining = Math.max(0, total - done);
+    if (remaining === 0) pdfCache.delete(issue_id);
+
+    return Response.json({
+      success: true,
+      page_number,
+      text_length: cleaned.length,
+      remaining_pages: remaining,
+      status,
+    });
+  } catch (error) {
+    console.error('process-page error:', String(error));
+    return Response.json({ error: String(error) }, { status: 500 });
+  }
+}
