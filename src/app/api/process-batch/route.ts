@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { pdf } from 'pdf-to-img';
+import sharp from 'sharp';
+import Tesseract from 'tesseract.js';
+
+export const maxDuration = 300;
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
@@ -23,83 +29,69 @@ export async function POST(request: Request) {
     `;
 
     if (issuesToProcess.length === 0) {
-        return NextResponse.json({ processed: 0, errors: [], message: "No unprocessed issues found." });
+      return NextResponse.json({ processed: 0, errors: [], message: "No unprocessed issues found." });
     }
 
     let processed = 0;
     const errors: string[] = [];
 
-    // Process each issue directly instead of self-fetching (avoids serverless timeout issues)
+    // Process each issue inline
     for (const issue of issuesToProcess) {
-        try {
-            console.log(`[Batch] Processing issue ${issue.id} inline...`);
-            
-            // Inline the process-issue logic instead of HTTP self-call
-            const { rows: issueRows } = await sql`SELECT pdf_url FROM issues WHERE id = ${issue.id}`;
-            if (issueRows.length === 0) {
-                errors.push(`Issue ${issue.id}: not found in DB`);
-                continue;
-            }
+      try {
+        console.log(`[Batch] Processing issue ${issue.id}...`);
 
-            const pdf_url = issueRows[0].pdf_url;
-
-            // Download PDF
-            const resp = await fetch(pdf_url);
-            if (!resp.ok) {
-                errors.push(`Issue ${issue.id}: failed to download PDF (${resp.status})`);
-                continue;
-            }
-            const arrayBuffer = await resp.arrayBuffer();
-            const buffer = Buffer.from(arrayBuffer);
-
-            // Convert to images
-            const { fromBuffer } = await import('pdf2pic');
-            const sharp = (await import('sharp')).default;
-            const Tesseract = (await import('tesseract.js')).default;
-            const os = await import('os');
-            const path = await import('path');
-
-            const savePath = path.join(os.tmpdir(), 'gazete_arsiv');
-            const convert = fromBuffer(buffer, {
-                density: 300,
-                saveFilename: `issue_${issue.id}_page`,
-                savePath,
-                format: "png",
-                width: 2048
-            });
-            const pagesOutput = await convert.bulk(-1, { responseType: "buffer" });
-
-            let pagesInserted = 0;
-            for (const pageData of pagesOutput) {
-                if (!pageData.buffer) continue;
-
-                const processedImageBuffer = await sharp(pageData.buffer)
-                    .grayscale()
-                    .normalize()
-                    .sharpen(1.5)
-                    .threshold(140)
-                    .toBuffer();
-
-                const { data: { text } } = await Tesseract.recognize(processedImageBuffer, 'tur');
-
-                const cleanText = text
-                    .replace(/([A-ZÇŞĞIİÖÜa-zçşğıiöü])[.\s]{1,2}(?=[A-ZÇŞĞIİÖÜa-zçşğıiöü][.\s])/g, '$1')
-                    .replace(/\s+/g, ' ')
-                    .trim();
-
-                await sql`
-                    INSERT INTO pages (issue_id, page_number, ocr_text)
-                    VALUES (${issue.id}, ${pageData.page}, ${cleanText})
-                `;
-                pagesInserted++;
-            }
-
-            console.log(`[Batch] Issue ${issue.id} done: ${pagesInserted} pages`);
-            processed++;
-        } catch (err: any) {
-            console.error(`[Batch] Issue ${issue.id} error:`, err);
-            errors.push(`Issue ${issue.id} failed: ${err.message}`);
+        const { rows: issueRows } = await sql`SELECT pdf_url FROM issues WHERE id = ${issue.id}`;
+        if (issueRows.length === 0) {
+          errors.push(`Issue ${issue.id}: not found in DB`);
+          continue;
         }
+        const pdf_url = issueRows[0].pdf_url;
+
+        // Download PDF
+        const resp = await fetch(pdf_url);
+        if (!resp.ok) {
+          errors.push(`Issue ${issue.id}: failed to download PDF (${resp.status})`);
+          continue;
+        }
+        const pdfBuffer = await resp.arrayBuffer();
+
+        // Convert PDF to images using pdf-to-img (pdf.js, no system deps)
+        const document = await pdf(Buffer.from(pdfBuffer), { scale: 3 });
+        let pageNumber = 0;
+
+        for await (const pageImage of document) {
+          pageNumber++;
+
+          const processedImage = await sharp(Buffer.from(pageImage))
+            .grayscale()
+            .normalise()
+            .sharpen(1.5)
+            .threshold(140)
+            .png()
+            .toBuffer();
+
+          const { data: { text } } = await Tesseract.recognize(processedImage, 'tur');
+
+          const cleaned = text
+            .replace(/\b([A-ZÇĞİÖŞÜa-zçğışöüA-Z])\.\s*(?=[A-ZÇĞİÖŞÜa-zçğışöüA-Z]\.)/g, '$1')
+            .replace(/(?<!\w)([a-zA-ZçğışöüÇĞİÖŞÜ])\s+(?=[a-zA-ZçğışöüÇĞİÖŞÜ]\s)/g, '$1')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          await sql`
+            INSERT INTO pages (issue_id, page_number, ocr_text)
+            VALUES (${issue.id}, ${pageNumber}, ${cleaned})
+          `;
+
+          console.log(`[Batch] Issue ${issue.id} page ${pageNumber} done: ${cleaned.length} chars`);
+        }
+
+        console.log(`[Batch] Issue ${issue.id} completed: ${pageNumber} pages`);
+        processed++;
+      } catch (err: any) {
+        console.error(`[Batch] Issue ${issue.id} error:`, err);
+        errors.push(`Issue ${issue.id} failed: ${err.message}`);
+      }
     }
 
     return NextResponse.json({ processed, errors });
