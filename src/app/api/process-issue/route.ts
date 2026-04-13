@@ -1,6 +1,6 @@
 import { sql } from '@vercel/postgres';
 import sharp from 'sharp';
-import Tesseract from 'tesseract.js';
+import { createWorker } from 'tesseract.js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       console.log('Processing page', pageNum + 1);
 
       const page = doc.loadPage(pageNum);
-      const matrix = mupdf.Matrix.scale(2.5, 2.5);
+      const matrix = mupdf.Matrix.scale(1.5, 1.5);
       const pixmap = page.toPixmap(matrix, mupdf.ColorSpace.DeviceRGB, false, true);
       const pngBuffer = Buffer.from(pixmap.asPNG());
 
@@ -45,9 +45,14 @@ export async function POST(request: Request) {
         .png()
         .toBuffer();
 
-      const { data: { text } } = await Tesseract.recognize(processed, 'tur', {
-        logger: () => {}
+      const worker = await createWorker('tur', 1, {
+        workerBlobURL: false,
+        langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+        cacheMethod: 'none',
+        logger: () => {},
       });
+      const { data: { text } } = await worker.recognize(processed);
+      await worker.terminate();
 
       const cleaned = text
         .replace(/([A-Za-zçğışöüÇĞİÖŞÜ])\.\s*(?=[A-Za-zçğışöüÇĞİÖŞÜ]\.)/g, '$1')

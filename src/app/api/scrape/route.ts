@@ -23,9 +23,10 @@ export async function POST(request: Request) {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
+        'Referer': 'https://nek.istanbul.edu.tr/',
         'Connection': 'keep-alive',
-      }
+      },
+      signal: AbortSignal.timeout(30000),
     });
     if (!response.ok) {
         return NextResponse.json({ error: `Failed to fetch index_url: ${response.status} ${response.statusText}` }, { status: 400 });
