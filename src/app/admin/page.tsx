@@ -21,6 +21,10 @@ export default function AdminDashboard() {
   // Tab 2 & 3 state
   const [selectedSourceId, setSelectedSourceId] = useState<string>('');
   const [issues, setIssues] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalIssues, setTotalIssues] = useState(0);
+  const ISSUES_PER_PAGE = 100;
+  
   const [scrapeLoading, setScrapeLoading] = useState(false);
   const [scrapeResult, setScrapeResult] = useState('');
   
@@ -38,12 +42,12 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (activeTab === 2 && selectedSourceId) {
-      loadIssues(selectedSourceId);
+      loadIssues(selectedSourceId, currentPage);
     }
     if (activeTab === 4) {
       loadStats();
     }
-  }, [activeTab, selectedSourceId]);
+  }, [activeTab, selectedSourceId, currentPage]);
 
   const loadSources = async () => {
     try {
@@ -60,11 +64,12 @@ export default function AdminDashboard() {
     }
   };
 
-  const loadIssues = async (id: string) => {
+  const loadIssues = async (id: string, page: number = 1) => {
     try {
-      const res = await fetch(`/api/issues?source_id=${id}&limit=20`);
+      const res = await fetch(`/api/issues?source_id=${id}&page=${page}&limit=${ISSUES_PER_PAGE}`);
       const data = await res.json();
       setIssues(data.issues || []);
+      setTotalIssues(data.totalCount || 0);
     } catch(e) {
       console.error("Failed to load issues", e);
     }
@@ -291,7 +296,7 @@ export default function AdminDashboard() {
           <div className="card mb-8" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div className="flex gap-4 items-center">
               <label>Kaynak Seç:</label>
-              <select value={selectedSourceId} onChange={e => setSelectedSourceId(e.target.value)} style={{width:'300px'}}>
+              <select value={selectedSourceId} onChange={e => { setSelectedSourceId(e.target.value); setCurrentPage(1); }} style={{width:'300px'}}>
                 {sources.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
@@ -303,7 +308,10 @@ export default function AdminDashboard() {
           {scrapeResult && <div className="card mb-8 snippet-preview">{scrapeResult}</div>}
 
           <div className="card">
-            <h3>Son Eklenen Sayılar (Son 20)</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3>Son Eklenen Sayılar (Sayfa {currentPage})</h3>
+              <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Toplam: {totalIssues}</span>
+            </div>
             <table>
               <thead>
                 <tr>
@@ -327,6 +335,64 @@ export default function AdminDashboard() {
                 {issues.length === 0 && <tr><td colSpan={4} style={{color:'#94a3b8'}}>Kayıt bulunamadı. Önce &quot;Linkleri Çek&quot; ile sayıları ekleyin.</td></tr>}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {totalIssues > ISSUES_PER_PAGE && (
+              <div className="mt-8 flex justify-center items-center gap-2 flex-wrap">
+                <button 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className="btn btn-outline"
+                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                >
+                  Önceki
+                </button>
+
+                {(() => {
+                  const pages = [];
+                  const totalPages = Math.ceil(totalIssues / ISSUES_PER_PAGE);
+                  
+                  // Google-like pagination logic
+                  let start = Math.max(1, currentPage - 2);
+                  let end = Math.min(totalPages, start + 4);
+                  if (end === totalPages) start = Math.max(1, end - 4);
+
+                  if (start > 1) {
+                    pages.push(<button key={1} onClick={() => setCurrentPage(1)} className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>1</button>);
+                    if (start > 2) pages.push(<span key="dots1" style={{ color: '#94a3b8' }}>...</span>);
+                  }
+
+                  for (let i = start; i <= end; i++) {
+                    pages.push(
+                      <button 
+                        key={i} 
+                        onClick={() => setCurrentPage(i)}
+                        className={currentPage === i ? "btn" : "btn btn-outline"}
+                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', minWidth: '35px' }}
+                      >
+                        {i}
+                      </button>
+                    );
+                  }
+
+                  if (end < totalPages) {
+                    if (end < totalPages - 1) pages.push(<span key="dots2" style={{ color: '#94a3b8' }}>...</span>);
+                    pages.push(<button key={totalPages} onClick={() => setCurrentPage(totalPages)} className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>{totalPages}</button>);
+                  }
+
+                  return pages;
+                })()}
+
+                <button 
+                  disabled={currentPage === Math.ceil(totalIssues / ISSUES_PER_PAGE)}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  className="btn btn-outline"
+                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                >
+                  Sonraki
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
