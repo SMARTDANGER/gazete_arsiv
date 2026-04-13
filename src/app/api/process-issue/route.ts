@@ -54,16 +54,18 @@ async function processPDF(pdfUrl: string, issueId: number) {
 }
 
 export async function POST(request: Request) {
+  let issueIdForLog: string | number = 'unknown';
   try {
     const { issue_id } = await request.json();
+    issueIdForLog = issue_id;
     if (!issue_id) {
-      return NextResponse.json({ error: "issue_id is required" }, { status: 400 });
+      return Response.json({ error: "issue_id is required" }, { status: 400 });
     }
 
     // Get issue from DB
     const { rows } = await sql`SELECT pdf_url FROM issues WHERE id = ${issue_id}`;
     if (rows.length === 0) {
-      return NextResponse.json({ error: "Issue not found" }, { status: 404 });
+      return Response.json({ error: "Issue not found" }, { status: 404 });
     }
     const pdf_url = rows[0].pdf_url;
     console.log(`[OCR] Processing issue ${issue_id} from ${pdf_url}`);
@@ -71,9 +73,9 @@ export async function POST(request: Request) {
     const pages_processed = await processPDF(pdf_url, issue_id);
 
     console.log(`[OCR] Finished processing issue ${issue_id}. Pages: ${pages_processed}`);
-    return NextResponse.json({ pages_processed });
+    return Response.json({ pages_processed });
   } catch (error: any) {
-    console.error("[OCR] Process error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(`[OCR] Process error for issue ${issueIdForLog}:`, error);
+    return Response.json({ error: String(error) }, { status: 500 });
   }
 }

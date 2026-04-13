@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const { source_id, limit = 10 } = body;
     
     if (!source_id) {
-      return NextResponse.json({ error: "source_id is required" }, { status: 400 });
+      return Response.json({ error: "source_id is required" }, { status: 400 });
     }
 
     const numericSourceId = Number(source_id);
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     `;
 
     if (issuesToProcess.length === 0) {
-      return NextResponse.json({ processed: 0, errors: [], message: "No unprocessed issues found." });
+      return Response.json({ processed: 0, errors: [], message: "No unprocessed issues found." });
     }
 
     let processed = 0;
@@ -94,8 +94,9 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ processed, errors });
+    return Response.json({ processed, errors });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('process-batch error:', error);
+    return Response.json({ error: String(error) }, { status: 500 });
   }
 }
