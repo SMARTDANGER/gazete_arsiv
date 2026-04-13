@@ -50,18 +50,22 @@ export async function POST(request: Request) {
       const wasmBinary = await loadWasmBinary();
       const client = createOCRClient({ wasmBinary });
 
-      await client.loadModel('https://github.com/tesseract-ocr/tessdata_fast/raw/main/tur.traineddata');
+      const modelResponse = await fetch('https://github.com/tesseract-ocr/tessdata_fast/raw/main/tur.traineddata');
+      if (!modelResponse.ok) throw new Error('Model fetch failed: ' + modelResponse.status);
+      const modelData = new Uint8Array(await modelResponse.arrayBuffer());
+      await client.loadModel(modelData);
 
-      const imageData = await sharp(processed)
+      const { data, info } = await sharp(processed)
+        .ensureAlpha()
         .raw()
-        .toBuffer({ resolveWithObject: true })
-        .then(({ data, info }) => ({
-          data: new Uint8ClampedArray(data),
-          width: info.width,
-          height: info.height,
-        }));
+        .toBuffer({ resolveWithObject: true });
 
-      await client.loadImage(imageData);
+      await client.loadImage({
+        data: new Uint8ClampedArray(data.buffer),
+        width: info.width,
+        height: info.height,
+      });
+
       const text = await client.getText();
       client.destroy();
 
