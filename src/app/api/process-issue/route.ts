@@ -1,9 +1,37 @@
 import { sql } from '@vercel/postgres';
 import sharp from 'sharp';
-import Tesseract from 'tesseract.js';
+import { createOCRClient } from 'tesseract-wasm';
+import { loadWasmBinary } from 'tesseract-wasm/node';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
+
+const TRAINED_DATA_URL =
+  'https://github.com/robertknight/tesseract-wasm/raw/main/third_party/tessdata_fast/tur.traineddata';
+
+async function bufferToImageData(buffer: Buffer) {
+  const { data, info } = await sharp(buffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  return {
+    data: new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength),
+    width: info.width,
+    height: info.height,
+  };
+}
+
+async function runOCR(imageBuffer: Buffer, modelBuffer: Uint8Array, wasmBinary: ArrayBuffer | Uint8Array): Promise<string> {
+  const client = createOCRClient({ wasmBinary } as any);
+  try {
+    await client.loadModel(modelBuffer);
+    const imageData = await bufferToImageData(imageBuffer);
+    await client.loadImage(imageData as any);
+    return await client.getText();
+  } finally {
+    client.destroy();
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -23,6 +51,12 @@ export async function POST(request: Request) {
     if (!response.ok) throw new Error('PDF fetch failed: ' + response.status);
     const pdfBuffer = Buffer.from(await response.arrayBuffer());
     console.log('PDF downloaded, size:', pdfBuffer.length);
+
+    console.log('Loading OCR wasm + model');
+    const wasmBinary = await loadWasmBinary();
+    const modelResp = await fetch(TRAINED_DATA_URL);
+    if (!modelResp.ok) throw new Error('Trained data fetch failed: ' + modelResp.status);
+    const modelBuffer = new Uint8Array(await modelResp.arrayBuffer());
 
     const mupdf = await import('mupdf');
     const doc = mupdf.Document.openDocument(pdfBuffer, 'application/pdf');
@@ -45,9 +79,7 @@ export async function POST(request: Request) {
         .png()
         .toBuffer();
 
-      const { data: { text } } = await Tesseract.recognize(processed, 'tur', {
-        logger: () => {}
-      });
+      const text = await runOCR(processed, modelBuffer, wasmBinary);
 
       const cleaned = text
         .replace(/([A-Za-zçğışöüÇĞİÖŞÜ])\.\s*(?=[A-Za-zçğışöüÇĞİÖŞÜ]\.)/g, '$1')
