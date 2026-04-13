@@ -10,6 +10,7 @@
     "setup-db": "ts-node -r dotenv/config scripts/setup-db.ts"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^0.1.97",
     "@vercel/postgres": "^0.10.0",
     "canvas": "^3.2.3",
     "cheerio": "^1.2.0",

@@ -1,3 +1,11 @@
+import * as canvas from '@napi-rs/canvas';
+// @ts-ignore
+globalThis.DOMMatrix = canvas.DOMMatrix;
+// @ts-ignore
+globalThis.ImageData = canvas.ImageData;
+// @ts-ignore
+globalThis.Path2D = canvas.Path2D;
+
 import { sql } from '@vercel/postgres';
 import sharp from 'sharp';
 import Tesseract from 'tesseract.js';
