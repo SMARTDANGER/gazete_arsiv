@@ -34,3 +34,37 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { source_id, mode } = await request.json();
+    if (!source_id || !mode) {
+      return NextResponse.json({ error: 'source_id and mode are required' }, { status: 400 });
+    }
+    const sid = Number(source_id);
+
+    if (mode === 'all') {
+      await sql`DELETE FROM pages WHERE issue_id IN (SELECT id FROM issues WHERE source_id = ${sid})`;
+      const { rowCount } = await sql`DELETE FROM issues WHERE source_id = ${sid}`;
+      return NextResponse.json({ deleted: rowCount ?? 0 });
+    }
+
+    if (mode === 'processed') {
+      const { rows: processedIssues } = await sql`
+        SELECT DISTINCT i.id FROM issues i
+        INNER JOIN pages p ON p.issue_id = i.id
+        WHERE i.source_id = ${sid}
+      `;
+      const ids = processedIssues.map(r => Number(r.id));
+      if (ids.length === 0) return NextResponse.json({ deleted: 0 });
+
+      await sql.query('DELETE FROM pages WHERE issue_id = ANY($1::int[])', [ids]);
+      const result = await sql.query('DELETE FROM issues WHERE id = ANY($1::int[])', [ids]);
+      return NextResponse.json({ deleted: result.rowCount ?? 0 });
+    }
+
+    return NextResponse.json({ error: 'Invalid mode' }, { status: 400 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

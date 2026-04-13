@@ -27,6 +27,7 @@ export default function AdminDashboard() {
   
   const [scrapeLoading, setScrapeLoading] = useState(false);
   const [scrapeResult, setScrapeResult] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
   
   const [batchLimit, setBatchLimit] = useState(10);
   const [manualIssueId, setManualIssueId] = useState('');
@@ -143,6 +144,30 @@ export default function AdminDashboard() {
       }
     } catch(e: any) { setScrapeResult(`Hata: ${e.message}`); }
     setScrapeLoading(false);
+  };
+
+  const deleteIssues = async (mode: 'all' | 'processed') => {
+    if (!selectedSourceId) return;
+    const msg = mode === 'all'
+      ? 'Bu kaynağa ait TÜM sayılar silinecek. Emin misiniz?'
+      : 'Bu kaynağa ait İŞLENMİŞ tüm sayılar silinecek. Emin misiniz?';
+    if (!confirm(msg)) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch('/api/issues', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source_id: Number(selectedSourceId), mode })
+      });
+      const data = await res.json();
+      if (data.error) setScrapeResult(`Hata: ${data.error}`);
+      else setScrapeResult(`${data.deleted} sayı silindi.`);
+      await loadIssues(selectedSourceId, 1);
+      setCurrentPage(1);
+    } catch (e: any) {
+      setScrapeResult(`Hata: ${e.message}`);
+    }
+    setDeleteLoading(false);
   };
 
   // ----- Progress Polling -----
@@ -351,6 +376,23 @@ export default function AdminDashboard() {
           </div>
 
           {scrapeResult && <div className="card mb-8 snippet-preview">{scrapeResult}</div>}
+
+          <div className="card mb-8" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => deleteIssues('all')}
+              disabled={deleteLoading || !selectedSourceId}
+              style={{ background: '#dc2626', borderColor: '#dc2626', color: '#fff' }}
+            >
+              {deleteLoading ? '...' : 'Tüm Sayıları Sil'}
+            </button>
+            <button
+              onClick={() => deleteIssues('processed')}
+              disabled={deleteLoading || !selectedSourceId}
+              style={{ background: '#ea580c', borderColor: '#ea580c', color: '#fff' }}
+            >
+              {deleteLoading ? '...' : 'İşlenmişleri Sil'}
+            </button>
+          </div>
 
           <div className="card">
             <div className="flex justify-between items-center mb-4">
