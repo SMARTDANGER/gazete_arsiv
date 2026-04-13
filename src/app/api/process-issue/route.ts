@@ -1,8 +1,26 @@
 import { sql } from '@vercel/postgres';
 import sharp from 'sharp';
 
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300;
+
+let cachedWasmBinary: Uint8Array | null = null;
+let cachedModelData: Uint8Array | null = null;
+
+async function getWasmBinary(): Promise<Uint8Array> {
+  if (cachedWasmBinary) return cachedWasmBinary;
+  const { loadWasmBinary } = await import('tesseract-wasm/node');
+  cachedWasmBinary = await loadWasmBinary();
+  return cachedWasmBinary;
+}
+
+async function getModelData(): Promise<Uint8Array> {
+  if (cachedModelData) return cachedModelData;
+  const res = await fetch('https://github.com/tesseract-ocr/tessdata_fast/raw/main/tur.traineddata');
+  if (!res.ok) throw new Error('Model fetch failed: ' + res.status);
+  cachedModelData = new Uint8Array(await res.arrayBuffer());
+  return cachedModelData;
+}
 
 export async function POST(request: Request) {
   try {
@@ -28,6 +46,10 @@ export async function POST(request: Request) {
     const totalPages = doc.countPages();
     console.log('Total pages:', totalPages);
 
+    const { createOCREngine } = await import('tesseract-wasm');
+    const wasmBinary = await getWasmBinary();
+    const modelData = await getModelData();
+
     for (let pageNum = 0; pageNum < totalPages; pageNum++) {
       console.log('Processing page', pageNum + 1);
 
@@ -44,30 +66,21 @@ export async function POST(request: Request) {
         .png()
         .toBuffer();
 
-      const { createOCRClient } = await import('tesseract-wasm');
-      const { loadWasmBinary } = await import('tesseract-wasm/node');
-
-      const wasmBinary = await loadWasmBinary();
-      const client = createOCRClient({ wasmBinary });
-
-      const modelResponse = await fetch('https://github.com/tesseract-ocr/tessdata_fast/raw/main/tur.traineddata');
-      if (!modelResponse.ok) throw new Error('Model fetch failed: ' + modelResponse.status);
-      const modelData = new Uint8Array(await modelResponse.arrayBuffer());
-      await client.loadModel(modelData);
+      const engine = await createOCREngine({ wasmBinary });
+      engine.loadModel(modelData);
 
       const { data, info } = await sharp(processed)
         .ensureAlpha()
         .raw()
         .toBuffer({ resolveWithObject: true });
 
-      await client.loadImage({
-        data: new Uint8ClampedArray(data.buffer),
+      engine.loadImage({
+        data: new Uint8Array(data.buffer, data.byteOffset, data.byteLength),
         width: info.width,
         height: info.height,
       });
-
-      const text = await client.getText();
-      client.destroy();
+      const text = engine.getText();
+      engine.destroy();
 
       const cleaned = text
         .replace(/([A-Za-zçğışöüÇĞİÖŞÜ])\.\s*(?=[A-Za-zçğışöüÇĞİÖŞÜ]\.)/g, '$1')
