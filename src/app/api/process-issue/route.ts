@@ -1,14 +1,32 @@
-import { pdf } from 'pdf-to-img';
+import { sql } from '@vercel/postgres';
 import sharp from 'sharp';
 import Tesseract from 'tesseract.js';
-import { sql } from '@vercel/postgres';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
+async function pdfPageToImageBuffer(pdfBuffer: Buffer, pageNum: number): Promise<Buffer> {
+  const { createCanvas } = await import('canvas');
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+
+  const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfBuffer) });
+  const pdfDoc = await loadingTask.promise;
+  const page = await pdfDoc.getPage(pageNum);
+
+  const scale = 2.5;
+  const viewport = page.getViewport({ scale });
+  const canvas = createCanvas(viewport.width, viewport.height);
+  const context = canvas.getContext('2d');
+
+  await page.render({ canvasContext: context as any, viewport }).promise;
+
+  return canvas.toBuffer('image/png');
+}
+
 export async function POST(request: Request) {
   try {
     const { issue_id } = await request.json();
+
     const { rows } = await sql`SELECT pdf_url FROM issues WHERE id = ${issue_id}`;
     if (!rows.length) return Response.json({ error: 'Issue not found' }, { status: 404 });
 
@@ -16,18 +34,21 @@ export async function POST(request: Request) {
     console.log('Downloading PDF:', pdfUrl);
 
     const response = await fetch(pdfUrl);
-    if (!response.ok) throw new Error('PDF download failed: ' + response.status);
+    if (!response.ok) throw new Error('PDF fetch failed: ' + response.status);
     const pdfBuffer = Buffer.from(await response.arrayBuffer());
 
-    console.log('PDF downloaded, starting conversion');
-    const document = await pdf(pdfBuffer, { scale: 2.5 });
-    let pageNumber = 0;
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfBuffer) });
+    const pdfDoc = await loadingTask.promise;
+    const totalPages = pdfDoc.numPages;
+    console.log('Total pages:', totalPages);
 
-    for await (const pageImage of document) {
-      pageNumber++;
-      console.log('Processing page', pageNumber);
+    for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+      console.log('Processing page', pageNum, 'of', totalPages);
 
-      const processed = await sharp(Buffer.from(pageImage))
+      const imageBuffer = await pdfPageToImageBuffer(pdfBuffer, pageNum);
+
+      const processed = await sharp(imageBuffer)
         .grayscale()
         .normalise()
         .sharpen(1.5)
@@ -46,14 +67,14 @@ export async function POST(request: Request) {
 
       await sql`
         INSERT INTO pages (issue_id, page_number, ocr_text)
-        VALUES (${issue_id}, ${pageNumber}, ${cleaned})
+        VALUES (${issue_id}, ${pageNum}, ${cleaned})
         ON CONFLICT DO NOTHING
       `;
 
-      console.log('Page', pageNumber, 'saved:', cleaned.length, 'chars');
+      console.log('Page', pageNum, 'saved,', cleaned.length, 'chars');
     }
 
-    return Response.json({ success: true, pages_processed: pageNumber });
+    return Response.json({ success: true, pages_processed: totalPages });
   } catch (error) {
     console.error('process-issue error:', String(error));
     return Response.json({ error: String(error) }, { status: 500 });
