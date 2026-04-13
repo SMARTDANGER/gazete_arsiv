@@ -1,10 +1,10 @@
+export const maxDuration = 300;
+export const dynamic = 'force-dynamic';
+
 import { sql } from '@/lib/db';
 import { pdf } from 'pdf-to-img';
 import sharp from 'sharp';
 import Tesseract from 'tesseract.js';
-
-export const maxDuration = 300;
-export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
