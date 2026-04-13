@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 const TRAINED_DATA_URL =
-  'https://github.com/robertknight/tesseract-wasm/raw/main/third_party/tessdata_fast/tur.traineddata';
+  'https://github.com/tesseract-ocr/tessdata_fast/raw/main/tur.traineddata';
 
 async function bufferToImageData(buffer: Buffer) {
   const { data, info } = await sharp(buffer)
