@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['sharp', 'tesseract.js', 'canvas', 'pdfjs-dist', '@napi-rs/canvas'],
+  serverExternalPackages: ['sharp', 'tesseract.js', 'mupdf'],
   env: { NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL }
 };
 

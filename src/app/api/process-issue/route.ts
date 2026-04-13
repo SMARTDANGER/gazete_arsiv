@@ -1,35 +1,9 @@
-import * as canvas from '@napi-rs/canvas';
-// @ts-ignore
-globalThis.DOMMatrix = canvas.DOMMatrix;
-// @ts-ignore
-globalThis.ImageData = canvas.ImageData;
-// @ts-ignore
-globalThis.Path2D = canvas.Path2D;
-
 import { sql } from '@vercel/postgres';
 import sharp from 'sharp';
 import Tesseract from 'tesseract.js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
-
-async function pdfPageToImageBuffer(pdfBuffer: Buffer, pageNum: number): Promise<Buffer> {
-  const { createCanvas } = await import('canvas');
-  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-
-  const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfBuffer) });
-  const pdfDoc = await loadingTask.promise;
-  const page = await pdfDoc.getPage(pageNum);
-
-  const scale = 2.5;
-  const viewport = page.getViewport({ scale });
-  const canvas = createCanvas(viewport.width, viewport.height);
-  const context = canvas.getContext('2d');
-
-  await page.render({ canvas: canvas as any, canvasContext: context as any, viewport } as any).promise;
-
-  return canvas.toBuffer('image/png');
-}
 
 export async function POST(request: Request) {
   try {
@@ -41,22 +15,29 @@ export async function POST(request: Request) {
     const pdfUrl = rows[0].pdf_url;
     console.log('Downloading PDF:', pdfUrl);
 
-    const response = await fetch(pdfUrl);
+    const response = await fetch(pdfUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
     if (!response.ok) throw new Error('PDF fetch failed: ' + response.status);
     const pdfBuffer = Buffer.from(await response.arrayBuffer());
+    console.log('PDF downloaded, size:', pdfBuffer.length);
 
-    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-    const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfBuffer) });
-    const pdfDoc = await loadingTask.promise;
-    const totalPages = pdfDoc.numPages;
+    const mupdf = await import('mupdf');
+    const doc = mupdf.Document.openDocument(pdfBuffer, 'application/pdf');
+    const totalPages = doc.countPages();
     console.log('Total pages:', totalPages);
 
-    for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-      console.log('Processing page', pageNum, 'of', totalPages);
+    for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+      console.log('Processing page', pageNum + 1);
 
-      const imageBuffer = await pdfPageToImageBuffer(pdfBuffer, pageNum);
+      const page = doc.loadPage(pageNum);
+      const matrix = mupdf.Matrix.scale(2.5, 2.5);
+      const pixmap = page.toPixmap(matrix, mupdf.ColorSpace.DeviceRGB, false, true);
+      const pngBuffer = Buffer.from(pixmap.asPNG());
 
-      const processed = await sharp(imageBuffer)
+      const processed = await sharp(pngBuffer)
         .grayscale()
         .normalise()
         .sharpen(1.5)
@@ -75,14 +56,19 @@ export async function POST(request: Request) {
 
       await sql`
         INSERT INTO pages (issue_id, page_number, ocr_text)
-        VALUES (${issue_id}, ${pageNum}, ${cleaned})
+        VALUES (${issue_id}, ${pageNum + 1}, ${cleaned})
         ON CONFLICT DO NOTHING
       `;
 
-      console.log('Page', pageNum, 'saved,', cleaned.length, 'chars');
+      console.log('Page', pageNum + 1, 'saved:', cleaned.length, 'chars');
+
+      pixmap.destroy();
+      page.destroy();
     }
 
+    doc.destroy();
     return Response.json({ success: true, pages_processed: totalPages });
+
   } catch (error) {
     console.error('process-issue error:', String(error));
     return Response.json({ error: String(error) }, { status: 500 });
