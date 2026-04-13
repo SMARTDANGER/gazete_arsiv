@@ -18,7 +18,7 @@ async function pdfPageToImageBuffer(pdfBuffer: Buffer, pageNum: number): Promise
   const canvas = createCanvas(viewport.width, viewport.height);
   const context = canvas.getContext('2d');
 
-  await page.render({ canvasContext: context as any, viewport }).promise;
+  await page.render({ canvas: canvas as any, canvasContext: context as any, viewport } as any).promise;
 
   return canvas.toBuffer('image/png');
 }
