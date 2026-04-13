@@ -28,5 +28,5 @@ Tarihi Türk gazeteleri için aranabilir bir arşiv uygulaması.
 
 ## Önemli Notlar
 
--   **OCR için Gereksinimler:** Yerel çalışmada `pdf2pic` kütüphanesi için sisteminizde **Ghostscript** ve **ImageMagick/GraphicsMagick** yüklü olmalıdır.
+-   **OCR için Gereksinimler:** `pdf-to-img` sisteme herhangi bir bağımlılık gerektirmez (Ghostscript/ImageMagick gerekmez).
 -   **Vercel Dağıtımı:** Dağıtım sonrası Vercel üzerinde `POSTGRES_URL` ortam değişkeninin tanımlı olduğundan emin olun.

@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { pdf } from 'pdf-to-img';
 import sharp from 'sharp';
@@ -19,7 +18,6 @@ export async function POST(request: Request) {
     const numericSourceId = Number(source_id);
     const numericLimit = Number(limit);
 
-    // Find up to `limit` issues for this source that have 0 pages (unprocessed).
     const { rows: issuesToProcess } = await sql`
       SELECT i.id 
       FROM issues i 
@@ -35,7 +33,6 @@ export async function POST(request: Request) {
     let processed = 0;
     const errors: string[] = [];
 
-    // Process each issue inline
     for (const issue of issuesToProcess) {
       try {
         console.log(`[Batch] Processing issue ${issue.id}...`);
@@ -47,7 +44,6 @@ export async function POST(request: Request) {
         }
         const pdf_url = issueRows[0].pdf_url;
 
-        // Download PDF
         const resp = await fetch(pdf_url);
         if (!resp.ok) {
           errors.push(`Issue ${issue.id}: failed to download PDF (${resp.status})`);
@@ -55,7 +51,6 @@ export async function POST(request: Request) {
         }
         const pdfBuffer = await resp.arrayBuffer();
 
-        // Convert PDF to images using pdf-to-img (pdf.js, no system deps)
         const document = await pdf(Buffer.from(pdfBuffer), { scale: 3 });
         let pageNumber = 0;
 
@@ -95,7 +90,7 @@ export async function POST(request: Request) {
     }
 
     return Response.json({ processed, errors });
-  } catch (error: any) {
+  } catch (error) {
     console.error('process-batch error:', error);
     return Response.json({ error: String(error) }, { status: 500 });
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 
 type Source = { 
@@ -33,11 +33,16 @@ export default function AdminDashboard() {
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrResult, setOcrResult] = useState('');
 
+  // Progress state
+  const [progress, setProgress] = useState<{ total: number; completed: number; pending: number; percent: number } | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Tab 4 state
   const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
     loadSources();
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, []);
 
   useEffect(() => {
@@ -140,10 +145,49 @@ export default function AdminDashboard() {
     setScrapeLoading(false);
   };
 
+  // ----- Progress Polling -----
+  const fetchProgress = useCallback(async () => {
+    if (!selectedSourceId) return;
+    try {
+      const res = await fetch(`/api/progress?source_id=${selectedSourceId}`);
+      const data = await res.json();
+      if (!data.error) {
+        setProgress(data);
+        if (data.pending === 0 && pollRef.current) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
+      }
+    } catch (e) {
+      console.error('Progress poll error', e);
+    }
+  }, [selectedSourceId]);
+
+  const startPolling = useCallback(() => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    fetchProgress();
+    pollRef.current = setInterval(fetchProgress, 5000);
+  }, [fetchProgress]);
+
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+  }, []);
+
+  // Load progress when Tab 3 is active
+  useEffect(() => {
+    if (activeTab === 3 && selectedSourceId) {
+      fetchProgress();
+    }
+    if (activeTab !== 3) {
+      stopPolling();
+    }
+  }, [activeTab, selectedSourceId, fetchProgress, stopPolling]);
+
   // ----- Tab 3 Actions -----
   const runBatchOcr = async () => {
     if (!selectedSourceId) return;
     setOcrLoading(true); setOcrResult('');
+    startPolling();
     try {
       const res = await fetch('/api/process-batch', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -154,6 +198,7 @@ export default function AdminDashboard() {
       else setOcrResult(`${data.processed} sayı başarıyla işlendi. Hatalar: ${data.errors.length}`);
     } catch(e: any) { setOcrResult(`Hata: ${e.message}`); }
     setOcrLoading(false);
+    fetchProgress();
   };
 
   const runManualOcr = async () => {
@@ -398,45 +443,94 @@ export default function AdminDashboard() {
       )}
 
       {activeTab === 3 && (
-        <div className="grid grid-cols-2">
-          <div className="card">
-            <h3>Toplu OCR İşlemi</h3>
-            <p className="mt-4 mb-4" style={{color: '#94a3b8', fontSize: '0.9rem'}}>
-              Seçili kaynak için &apos;Bekliyor&apos; durumundaki sayıları sırayla indirip OCR işleminden geçirir.
-            </p>
-            <div className="flex gap-4 items-center mb-4">
-              <select value={selectedSourceId} onChange={e => setSelectedSourceId(e.target.value)}>
-                {sources.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+        <div>
+          {/* Progress Bar */}
+          {progress && progress.total > 0 && (
+            <div className="card mb-8">
+              <div className="flex justify-between items-center mb-4">
+                <h3>OCR İlerleme Durumu</h3>
+                <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+                  {progress.completed} / {progress.total} tamamlandı (%{progress.percent})
+                </span>
+              </div>
+              {/* Progress bar track */}
+              <div style={{
+                width: '100%',
+                height: '28px',
+                background: 'rgba(0,0,0,0.4)',
+                borderRadius: '14px',
+                overflow: 'hidden',
+                border: '1px solid var(--border-color)',
+                position: 'relative'
+              }}>
+                {/* Progress bar fill */}
+                <div style={{
+                  width: `${progress.percent}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #22c55e, #4ade80)',
+                  borderRadius: '14px',
+                  transition: 'width 0.5s ease-in-out',
+                  boxShadow: '0 0 12px rgba(74, 222, 128, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: progress.percent > 3 ? 'auto' : '0'
+                }}>
+                  {progress.percent > 8 && (
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+                      %{progress.percent}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between mt-4" style={{ fontSize: '0.85rem' }}>
+                <span style={{ color: '#f87171' }}>Bekliyor: {progress.pending}</span>
+                <span style={{ color: '#4ade80' }}>Tamamlandı: {progress.completed}</span>
+                <span style={{ color: '#94a3b8' }}>Toplam: {progress.total}</span>
+              </div>
             </div>
-            <div className="flex gap-4 items-center mb-4">
-              <label>Limit (Kaç Sayı):</label>
-              <input type="number" min={1} max={100} value={batchLimit} onChange={e => setBatchLimit(parseInt(e.target.value) || 10)} style={{width:'100px'}} />
-            </div>
-            <button onClick={runBatchOcr} disabled={ocrLoading || !selectedSourceId} style={{width:'100%'}}>
-              {ocrLoading ? 'İşleniyor...' : 'Toplu İşle'}
-            </button>
-          </div>
-
-          <div className="card">
-            <h3>Manuel Sayı İşle</h3>
-            <p className="mt-4 mb-4" style={{color: '#94a3b8', fontSize: '0.9rem'}}>
-              Belirli bir ID&apos;ye sahip sayıyı zorla OCR işlemine sokar.
-            </p>
-            <div className="flex gap-4 items-center mb-4">
-              <label>Sayı (Issue) ID:</label>
-              <input type="number" min={1} value={manualIssueId} onChange={e => setManualIssueId(e.target.value)} />
-            </div>
-            <button onClick={runManualOcr} disabled={ocrLoading || !manualIssueId} className="btn-outline" style={{width:'100%'}}>
-              {ocrLoading ? 'İşleniyor...' : 'Tekil İşle'}
-            </button>
-          </div>
-
-          {ocrResult && (
-             <div className="card mt-4" style={{ gridColumn: 'span 2' }}>
-                <pre style={{ whiteSpace: 'pre-wrap' }}>{ocrResult}</pre>
-             </div>
           )}
+
+          <div className="grid grid-cols-2">
+            <div className="card">
+              <h3>Toplu OCR İşlemi</h3>
+              <p className="mt-4 mb-4" style={{color: '#94a3b8', fontSize: '0.9rem'}}>
+                Seçili kaynak için &apos;Bekliyor&apos; durumundaki sayıları sırayla indirip OCR işleminden geçirir.
+              </p>
+              <div className="flex gap-4 items-center mb-4">
+                <select value={selectedSourceId} onChange={e => setSelectedSourceId(e.target.value)}>
+                  {sources.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div className="flex gap-4 items-center mb-4">
+                <label>Limit (Kaç Sayı):</label>
+                <input type="number" min={1} max={100} value={batchLimit} onChange={e => setBatchLimit(parseInt(e.target.value) || 10)} style={{width:'100px'}} />
+              </div>
+              <button onClick={runBatchOcr} disabled={ocrLoading || !selectedSourceId} style={{width:'100%'}}>
+                {ocrLoading ? 'İşleniyor...' : 'Toplu İşle'}
+              </button>
+            </div>
+
+            <div className="card">
+              <h3>Manuel Sayı İşle</h3>
+              <p className="mt-4 mb-4" style={{color: '#94a3b8', fontSize: '0.9rem'}}>
+                Belirli bir ID&apos;ye sahip sayıyı zorla OCR işlemine sokar.
+              </p>
+              <div className="flex gap-4 items-center mb-4">
+                <label>Sayı (Issue) ID:</label>
+                <input type="number" min={1} value={manualIssueId} onChange={e => setManualIssueId(e.target.value)} />
+              </div>
+              <button onClick={runManualOcr} disabled={ocrLoading || !manualIssueId} className="btn-outline" style={{width:'100%'}}>
+                {ocrLoading ? 'İşleniyor...' : 'Tekil İşle'}
+              </button>
+            </div>
+
+            {ocrResult && (
+               <div className="card mt-4" style={{ gridColumn: 'span 2' }}>
+                  <pre style={{ whiteSpace: 'pre-wrap' }}>{ocrResult}</pre>
+               </div>
+            )}
+          </div>
         </div>
       )}
 
