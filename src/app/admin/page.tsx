@@ -265,6 +265,24 @@ export default function AdminDashboard() {
     fetchProgress();
   };
 
+  const resetOcr = async () => {
+    if (!selectedSourceId) return;
+    if (!confirm('Bu kaynağa ait işlenmiş (OCR yapılmış) tüm sayfalar silinecek ve verileri sıfırlanacaktır. Tekrar OCR yapılması gerekecek. Emin misiniz?')) return;
+    setOcrLoading(true); setOcrResult('');
+    try {
+      const res = await fetch('/api/issues', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source_id: Number(selectedSourceId), mode: 'reset_ocr' })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setOcrResult(`${data.reset} sayının OCR verisi sıfırlandı.`);
+      fetchProgress();
+    } catch(e: any) { setOcrResult(`Hata: ${e.message}`); }
+    setOcrLoading(false);
+  };
+
   const runManualOcr = async () => {
     if (!manualIssueId) return;
     setOcrLoading(true); setOcrResult('');
@@ -600,6 +618,24 @@ export default function AdminDashboard() {
               <button onClick={runManualOcr} disabled={ocrLoading || !manualIssueId} className="btn-outline" style={{width:'100%'}}>
                 {ocrLoading ? 'İşleniyor...' : 'Tekil İşle'}
               </button>
+            </div>
+
+            <div className="card mt-4" style={{ gridColumn: 'span 2' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ color: '#ea580c' }}>İşlenmişleri Sıfırla</h3>
+                  <p className="mt-2" style={{color: '#94a3b8', fontSize: '0.9rem', maxWidth: '600px'}}>
+                    Bu butona basarsanız, seçili kaynağa ait daha önce işlenmiş (OCR yapılmış) tüm arka plan metin verileri ve resim bilgileri silinecektir. Silinen verilerin yeniden oluşturulması için o sayıların OCR taramasından tekrar geçmesi gerekecektir. Gazete linkleri veritabanında kalmaya devam eder, bu işlem sadece işlenmiş verileri hedefler.
+                  </p>
+                </div>
+                <button
+                  onClick={resetOcr}
+                  disabled={ocrLoading || !selectedSourceId}
+                  style={{ background: '#ea580c', borderColor: '#ea580c', color: '#fff', padding: '0.8rem 1.6rem' }}
+                >
+                  {ocrLoading ? 'Sıfırlanıyor...' : 'Seçili Kaynağın OCR Verilerini Sıfırla'}
+                </button>
+              </div>
             </div>
 
             {ocrResult && (

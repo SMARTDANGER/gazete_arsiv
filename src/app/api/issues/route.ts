@@ -63,6 +63,20 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ deleted: result.rowCount ?? 0 });
     }
 
+    if (mode === 'reset_ocr') {
+      const { rows: processedIssues } = await sql`
+        SELECT DISTINCT i.id FROM issues i
+        INNER JOIN pages p ON p.issue_id = i.id
+        WHERE i.source_id = ${sid}
+      `;
+      const ids = processedIssues.map(r => Number(r.id));
+      if (ids.length === 0) return NextResponse.json({ reset: 0 });
+
+      await sql.query('DELETE FROM pages WHERE issue_id = ANY($1::int[])', [ids]);
+      const result = await sql.query(`UPDATE issues SET status = 'pending', page_count = NULL WHERE id = ANY($1::int[])`, [ids]);
+      return NextResponse.json({ reset: result.rowCount ?? 0 });
+    }
+
     return NextResponse.json({ error: 'Invalid mode' }, { status: 400 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
