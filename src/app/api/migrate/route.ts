@@ -24,6 +24,15 @@ export async function GET() {
     `);
     steps.push('duplicate pages removed');
 
+    await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS word_boxes JSONB DEFAULT NULL`;
+    steps.push('pages.word_boxes ensured');
+
+    await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS image_width INTEGER DEFAULT NULL`;
+    steps.push('pages.image_width ensured');
+
+    await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS image_height INTEGER DEFAULT NULL`;
+    steps.push('pages.image_height ensured');
+
     await sql.query(`
       DO $$ BEGIN
         IF NOT EXISTS (

@@ -56,7 +56,8 @@ export async function POST(request: Request) {
     }
 
     const page = doc.loadPage(page_number - 1);
-    const matrix = mupdf.Matrix.scale(2, 2);
+    const scale = 150 / 72;
+    const matrix = mupdf.Matrix.scale(scale, scale);
     const pixmap = page.toPixmap(matrix, mupdf.ColorSpace.DeviceRGB, false, true);
     const pngBuffer = Buffer.from(pixmap.asPNG());
     pixmap.destroy();
@@ -65,7 +66,6 @@ export async function POST(request: Request) {
 
     const processed = await sharp(pngBuffer)
       .grayscale()
-      .resize({ width: 2000, withoutEnlargement: true })
       .normalise()
       .sharpen(1.5)
       .toBuffer();
@@ -87,6 +87,37 @@ export async function POST(request: Request) {
       width: info.width,
       height: info.height,
     });
+
+    let wordBoxes: Array<{ text: string; rect: { left: number; top: number; right: number; bottom: number } }> = [];
+    try {
+      const items = engine.getTextBoxes('word');
+      wordBoxes = (items || [])
+        .filter((it: any) => it && it.text && it.text.trim().length > 0)
+        .map((it: any) => ({
+          text: String(it.text).trim(),
+          rect: {
+            left: it.rect.left | 0,
+            top: it.rect.top | 0,
+            right: it.rect.right | 0,
+            bottom: it.rect.bottom | 0,
+          },
+        }));
+    } catch {
+      try {
+        const hocr: string = engine.getHOCR();
+        const re = /<span class=['"]ocrx_word['"][^>]*title=['"]bbox (\d+) (\d+) (\d+) (\d+)[^'"]*['"][^>]*>([^<]+)<\/span>/g;
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(hocr)) !== null) {
+          wordBoxes.push({
+            text: m[5].trim(),
+            rect: { left: +m[1], top: +m[2], right: +m[3], bottom: +m[4] },
+          });
+        }
+      } catch {
+        wordBoxes = [];
+      }
+    }
+
     const text: string = engine.getText();
     engine.destroy();
 
@@ -95,10 +126,15 @@ export async function POST(request: Request) {
       .replace(/\s+/g, ' ')
       .trim();
 
+    const wordBoxesJson = JSON.stringify(wordBoxes);
     await sql`
-      INSERT INTO pages (issue_id, page_number, ocr_text)
-      VALUES (${issue_id}, ${page_number}, ${cleaned})
-      ON CONFLICT DO NOTHING
+      INSERT INTO pages (issue_id, page_number, ocr_text, word_boxes, image_width, image_height)
+      VALUES (${issue_id}, ${page_number}, ${cleaned}, ${wordBoxesJson}::jsonb, ${info.width}, ${info.height})
+      ON CONFLICT (issue_id, page_number)
+      DO UPDATE SET ocr_text = EXCLUDED.ocr_text,
+                    word_boxes = EXCLUDED.word_boxes,
+                    image_width = EXCLUDED.image_width,
+                    image_height = EXCLUDED.image_height
     `;
 
     const { rows: cntRows } = await sql`SELECT COUNT(*)::int AS done FROM pages WHERE issue_id = ${issue_id}`;

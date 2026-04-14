@@ -1,33 +1,18 @@
 import { sql } from '@/lib/db';
 import Link from 'next/link';
+import PageViewer from './PageViewer';
 
-// Escape special regex characters to prevent crashes from user input
-function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-// Sanitize text to prevent XSS when used with dangerouslySetInnerHTML
-function sanitizeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-export default async function PageViewer(props: { 
-  params: Promise<{ id: string }>,
-  searchParams: Promise<{ q?: string }>
+export default async function Page(props: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ q?: string }>;
 }) {
   const params = await props.params;
   const searchParams = await props.searchParams;
   const pageId = parseInt(params.id);
   const q = searchParams.q || '';
 
-  // Fetch data
   const { rows } = await sql`
-    SELECT p.*, i.pdf_url, i.date_label, s.name as source_name 
+    SELECT p.*, i.pdf_url, i.date_label, i.id as issue_id, s.name as source_name
     FROM pages p
     JOIN issues i ON p.issue_id = i.id
     JOIN newspaper_sources s ON i.source_id = s.id
@@ -44,14 +29,7 @@ export default async function PageViewer(props: {
   }
 
   const page = rows[0];
-  
-  // Sanitize OCR text first to prevent XSS, then highlight search term
-  let highlightedText = sanitizeHtml(page.ocr_text || '');
-  if (q) {
-    const safeQuery = escapeRegex(q);
-    const regex = new RegExp(`(${safeQuery})`, 'gi');
-    highlightedText = highlightedText.replace(regex, '<mark>$1</mark>');
-  }
+  const imageUrl = `/api/page-image?issue_id=${page.issue_id}&page_number=${page.page_number}`;
 
   return (
     <div className="container" style={{ maxWidth: '1400px' }}>
@@ -65,29 +43,14 @@ export default async function PageViewer(props: {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2" style={{ gap: '2rem', height: '80vh' }}>
-        {/* PDF Viewer */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <iframe 
-            src={`${page.pdf_url}#page=${page.page_number}`} 
-            width="100%" 
-            height="100%" 
-            style={{ border: 'none' }}
-            title="PDF Viewer"
-          />
-        </div>
-
-        {/* OCR Text Box */}
-        <div className="card" style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-          <h3 className="mb-4" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-            Metin (OCR)
-          </h3>
-          <div 
-            style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', flex: 1 }}
-            dangerouslySetInnerHTML={{ __html: highlightedText }}
-          />
-        </div>
-      </div>
+      <PageViewer
+        imageUrl={imageUrl}
+        wordBoxes={page.word_boxes || null}
+        imageWidth={page.image_width || null}
+        imageHeight={page.image_height || null}
+        ocrText={page.ocr_text || ''}
+        initialQuery={q}
+      />
     </div>
   );
 }
