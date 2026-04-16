@@ -44,6 +44,36 @@ export async function GET() {
     `);
     steps.push('pages unique(issue_id, page_number) ensured');
 
+    // Stored generated tsvector column — avoids per-row to_tsvector on every scan.
+    await sql.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'pages' AND column_name = 'tsv'
+        ) THEN
+          ALTER TABLE pages
+            ADD COLUMN tsv tsvector
+            GENERATED ALWAYS AS (to_tsvector('turkish', COALESCE(ocr_text, ''))) STORED;
+        END IF;
+      END $$;
+    `);
+    steps.push('pages.tsv generated column ensured');
+
+    await sql`CREATE INDEX IF NOT EXISTS pages_tsv_idx ON pages USING GIN (tsv)`;
+    steps.push('pages.tsv GIN index ensured');
+
+    await sql`DROP INDEX IF EXISTS pages_ocr_idx`;
+    steps.push('old pages_ocr_idx dropped (superseded by pages_tsv_idx)');
+
+    await sql`CREATE INDEX IF NOT EXISTS pages_issue_id_idx ON pages (issue_id)`;
+    steps.push('pages.issue_id index ensured');
+
+    await sql`CREATE INDEX IF NOT EXISTS issues_source_id_idx ON issues (source_id)`;
+    steps.push('issues.source_id index ensured');
+
+    await sql`CREATE INDEX IF NOT EXISTS issues_source_date_idx ON issues (source_id, date_label DESC)`;
+    steps.push('issues(source_id, date_label DESC) index ensured');
+
     return NextResponse.json({ success: true, steps });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

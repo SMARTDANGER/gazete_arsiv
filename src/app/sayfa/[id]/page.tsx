@@ -12,7 +12,10 @@ export default async function Page(props: {
   const q = searchParams.q || '';
 
   const { rows } = await sql`
-    SELECT p.*, i.pdf_url, i.date_label, i.id as issue_id, s.name as source_name
+    SELECT
+      p.id, p.issue_id, p.page_number, p.ocr_text,
+      p.word_boxes, p.image_width, p.image_height,
+      i.pdf_url, i.date_label, i.id as issue_id, s.name as source_name
     FROM pages p
     JOIN issues i ON p.issue_id = i.id
     JOIN newspaper_sources s ON i.source_id = s.id
