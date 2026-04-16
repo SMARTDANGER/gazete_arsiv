@@ -251,7 +251,14 @@ export default function AdminDashboard() {
   const runBatchOcr = async () => {
     if (!selectedSourceId) return;
     setOcrLoading(true); setOcrResult('');
-    setBatchProgress(null);
+    setBatchProgress({
+      issuesTotal: batchLimit,
+      issuesDone: 0,
+      currentLabel: 'Sıralama hazırlanıyor...',
+      pagesTotal: 0,
+      pagesDone: 0,
+      errors: 0,
+    });
     startPolling();
     try {
       const res = await fetch('/api/process-batch', {
