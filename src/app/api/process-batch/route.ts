@@ -3,10 +3,19 @@ import { sql } from '@vercel/postgres';
 export const maxDuration = 30;
 export const dynamic = 'force-dynamic';
 
+async function ensureSchema(): Promise<void> {
+  await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS word_boxes JSONB DEFAULT NULL`;
+  await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS image_width INTEGER DEFAULT NULL`;
+  await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS image_height INTEGER DEFAULT NULL`;
+  await sql`ALTER TABLE pages ADD CONSTRAINT pages_issue_page_unique UNIQUE (issue_id, page_number)`.catch(() => {});
+}
+
 export async function POST(request: Request) {
   try {
     const { source_id, limit = 5 } = await request.json();
     if (!source_id) return Response.json({ error: 'source_id required' }, { status: 400 });
+
+    await ensureSchema();
 
     const { rows: issues } = await sql`
       SELECT i.id, i.date_label FROM issues i
