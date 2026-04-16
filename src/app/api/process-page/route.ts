@@ -141,7 +141,7 @@ export async function POST(request: Request) {
       .trim();
 
     const wordBoxesJson = JSON.stringify(wordBoxes);
-    await sql`
+    const doInsert = () => sql`
       INSERT INTO pages (issue_id, page_number, ocr_text, word_boxes, image_width, image_height)
       VALUES (${issue_id}, ${page_number}, ${cleaned}, ${wordBoxesJson}::jsonb, ${info.width}, ${info.height})
       ON CONFLICT (issue_id, page_number)
@@ -150,6 +150,18 @@ export async function POST(request: Request) {
                     image_width = EXCLUDED.image_width,
                     image_height = EXCLUDED.image_height
     `;
+    try {
+      await doInsert();
+    } catch (e: any) {
+      const msg = String(e?.message || e);
+      if (/column .* does not exist|relation .* does not exist|no unique|constraint/i.test(msg)) {
+        console.warn('insert failed, running ensureSchema and retrying:', msg);
+        await ensureSchema();
+        await doInsert();
+      } else {
+        throw e;
+      }
+    }
 
     const { rows: cntRows } = await sql`SELECT COUNT(*)::int AS done FROM pages WHERE issue_id = ${issue_id}`;
     const done = cntRows[0].done;
