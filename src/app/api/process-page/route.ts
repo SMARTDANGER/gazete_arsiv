@@ -6,7 +6,16 @@ export const dynamic = 'force-dynamic';
 
 let cachedWasm: Uint8Array | null = null;
 let cachedModel: Uint8Array | null = null;
+let schemaEnsured = false;
 const pdfCache = new Map<number, Buffer>();
+
+async function ensureSchema(): Promise<void> {
+  if (schemaEnsured) return;
+  await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS word_boxes JSONB DEFAULT NULL`;
+  await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS image_width INTEGER DEFAULT NULL`;
+  await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS image_height INTEGER DEFAULT NULL`;
+  schemaEnsured = true;
+}
 
 async function getWasm(): Promise<Uint8Array> {
   if (cachedWasm) return cachedWasm;
@@ -41,6 +50,8 @@ export async function POST(request: Request) {
     if (!issue_id || !page_number) {
       return Response.json({ error: 'issue_id and page_number required' }, { status: 400 });
     }
+
+    await ensureSchema();
 
     const { rows } = await sql`SELECT pdf_url, page_count FROM issues WHERE id = ${issue_id}`;
     if (!rows.length) return Response.json({ error: 'Issue not found' }, { status: 404 });
