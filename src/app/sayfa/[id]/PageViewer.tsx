@@ -31,6 +31,7 @@ export default function PageViewer({
   const [query, setQuery] = useState(initialQuery);
   const [scale, setScale] = useState(1);
   const [current, setCurrent] = useState(0);
+  const [zoom, setZoom] = useState(100);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const textRef = useRef<HTMLDivElement | null>(null);
 
@@ -58,7 +59,7 @@ export default function PageViewer({
     window.addEventListener('resize', recomputeScale);
     return () => window.removeEventListener('resize', recomputeScale);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imageWidth]);
+  }, [imageWidth, zoom]);
 
   const highlightedHtml = useMemo(() => {
     const escape = (t: string) =>
@@ -121,11 +122,32 @@ export default function PageViewer({
             Sonraki →
           </button>
         </div>
+        <div className="flex items-center gap-2" style={{ background: '#1f2937', padding: '0.4rem 0.8rem', borderRadius: 8 }}>
+          <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>🔍</span>
+          <input
+            type="range"
+            min={50}
+            max={250}
+            step={10}
+            value={zoom}
+            onChange={e => setZoom(parseInt(e.target.value))}
+            style={{ width: 120 }}
+          />
+          <span style={{ fontSize: '0.85rem', minWidth: 44, textAlign: 'right' }}>%{zoom}</span>
+          <button
+            type="button"
+            onClick={() => setZoom(100)}
+            style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
+            className="btn-outline"
+          >
+            Sıfırla
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2" style={{ gap: '2rem', height: '80vh' }}>
         <div className="card" style={{ padding: 0, overflow: 'auto', position: 'relative' }}>
-          <div style={{ position: 'relative', width: '100%' }}>
+          <div style={{ position: 'relative', width: `${zoom}%`, minWidth: 'min-content' }}>
             <img
               ref={imgRef}
               src={imageUrl}
@@ -142,10 +164,12 @@ export default function PageViewer({
                   top: b.rect.top * scale,
                   width: (b.rect.right - b.rect.left) * scale,
                   height: (b.rect.bottom - b.rect.top) * scale,
-                  border: i === current ? '2px solid #f59e0b' : '2px solid #facc15',
-                  background: i === current ? 'rgba(245,158,11,0.35)' : 'rgba(250,204,21,0.25)',
+                  background: i === current
+                    ? 'rgba(139,92,246,0.55)'
+                    : 'rgba(139,92,246,0.28)',
                   borderRadius: 2,
                   pointerEvents: 'none',
+                  transition: 'background 0.15s',
                 }}
               />
             ))}
