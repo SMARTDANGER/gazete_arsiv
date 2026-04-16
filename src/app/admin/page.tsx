@@ -632,6 +632,75 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {batchProgress && (
+            <div className="card mb-8" style={{ borderColor: '#8b5cf6' }}>
+              {(() => {
+                const { issuesTotal, issuesDone, currentLabel, pagesTotal, pagesDone, errors } = batchProgress;
+                const pageFrac = pagesTotal > 0 ? pagesDone / pagesTotal : 0;
+                const overall = issuesTotal > 0 ? Math.min(1, (issuesDone + pageFrac) / issuesTotal) : 0;
+                const pct = Math.round(overall * 100);
+                const done = issuesDone >= issuesTotal;
+                return (
+                  <>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 style={{ color: '#a78bfa' }}>Toplu İşlem İlerlemesi</h3>
+                      <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+                        Sayı {Math.min(issuesDone + (done ? 0 : 1), issuesTotal)}/{issuesTotal}
+                        {!done && pagesTotal > 0 && ` — sayfa ${pagesDone}/${pagesTotal}`} (%{pct})
+                      </span>
+                    </div>
+                    <div style={{
+                      width: '100%',
+                      height: '28px',
+                      background: 'rgba(0,0,0,0.4)',
+                      borderRadius: '14px',
+                      overflow: 'hidden',
+                      border: '1px solid var(--border-color)',
+                    }}>
+                      <div style={{
+                        width: `${pct}%`,
+                        height: '100%',
+                        background: errors > 0
+                          ? 'linear-gradient(90deg, #f59e0b, #fbbf24)'
+                          : 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+                        borderRadius: '14px',
+                        transition: 'width 0.4s ease-in-out',
+                        boxShadow: '0 0 12px rgba(139, 92, 246, 0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: pct > 3 ? 'auto' : '0',
+                      }}>
+                        {pct > 8 && (
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>%{pct}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex justify-between mt-4" style={{ fontSize: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <span style={{ color: '#a78bfa' }}>
+                        {done ? (errors > 0 ? '⚠️' : '✓')
+                          : '⏳'} {done
+                            ? `Tamamlandı — ${issuesDone - errors}/${issuesTotal} başarılı${errors > 0 ? `, ${errors} hata` : ''}`
+                            : currentLabel
+                              ? `İşleniyor: ${currentLabel}`
+                              : 'Başlıyor...'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setBatchProgress(null)}
+                        className="btn-outline"
+                        style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem' }}
+                        disabled={!done}
+                      >
+                        Kapat
+                      </button>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
+
           <div className="grid grid-cols-2">
             <div className="card">
               <h3>Toplu OCR İşlemi</h3>
@@ -650,64 +719,6 @@ export default function AdminDashboard() {
               <button onClick={runBatchOcr} disabled={ocrLoading || !selectedSourceId} style={{width:'100%'}}>
                 {ocrLoading ? 'İşleniyor...' : 'Toplu İşle'}
               </button>
-
-              {batchProgress && (() => {
-                const { issuesTotal, issuesDone, currentLabel, pagesTotal, pagesDone, errors } = batchProgress;
-                const pageFrac = pagesTotal > 0 ? pagesDone / pagesTotal : 0;
-                const overall = issuesTotal > 0
-                  ? Math.min(1, (issuesDone + pageFrac) / issuesTotal)
-                  : 0;
-                const pct = Math.round(overall * 100);
-                const done = issuesDone >= issuesTotal;
-                return (
-                  <div className="mt-4" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                    <div className="flex justify-between items-center mb-2" style={{ fontSize: '0.85rem' }}>
-                      <span style={{ color: '#94a3b8' }}>
-                        Sayı {Math.min(issuesDone + (done ? 0 : 1), issuesTotal)}/{issuesTotal}
-                        {!done && pagesTotal > 0 && ` — sayfa ${pagesDone}/${pagesTotal}`}
-                      </span>
-                      <span style={{ color: '#94a3b8' }}>%{pct}</span>
-                    </div>
-                    <div style={{
-                      width: '100%',
-                      height: '22px',
-                      background: 'rgba(0,0,0,0.4)',
-                      borderRadius: '11px',
-                      overflow: 'hidden',
-                      border: '1px solid var(--border-color)',
-                    }}>
-                      <div style={{
-                        width: `${pct}%`,
-                        height: '100%',
-                        background: errors > 0
-                          ? 'linear-gradient(90deg, #f59e0b, #fbbf24)'
-                          : 'linear-gradient(90deg, #6366f1, #8b5cf6)',
-                        borderRadius: '11px',
-                        transition: 'width 0.4s ease-in-out',
-                        boxShadow: '0 0 10px rgba(139, 92, 246, 0.4)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                        {pct > 8 && (
-                          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#fff' }}>%{pct}</span>
-                        )}
-                      </div>
-                    </div>
-                    {currentLabel && !done && (
-                      <div className="mt-2" style={{ fontSize: '0.78rem', color: '#64748b', wordBreak: 'break-word' }}>
-                        İşleniyor: {currentLabel}
-                      </div>
-                    )}
-                    {done && (
-                      <div className="mt-2" style={{ fontSize: '0.8rem', color: errors > 0 ? '#fbbf24' : '#4ade80' }}>
-                        ✓ Tamamlandı — {issuesDone - errors}/{issuesTotal} başarılı
-                        {errors > 0 && `, ${errors} hata`}
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
             </div>
 
             <div className="card">
