@@ -6,15 +6,18 @@ export const dynamic = 'force-dynamic';
 
 let cachedWasm: Uint8Array | null = null;
 let cachedModel: Uint8Array | null = null;
-let schemaEnsured = false;
 const pdfCache = new Map<number, Buffer>();
 
 async function ensureSchema(): Promise<void> {
-  if (schemaEnsured) return;
-  await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS word_boxes JSONB DEFAULT NULL`;
-  await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS image_width INTEGER DEFAULT NULL`;
-  await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS image_height INTEGER DEFAULT NULL`;
-  schemaEnsured = true;
+  try {
+    await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS word_boxes JSONB DEFAULT NULL`;
+    await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS image_width INTEGER DEFAULT NULL`;
+    await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS image_height INTEGER DEFAULT NULL`;
+    await sql`ALTER TABLE pages ADD CONSTRAINT pages_issue_page_unique UNIQUE (issue_id, page_number)`.catch(() => {});
+  } catch (e) {
+    console.error('ensureSchema failed:', String(e));
+    throw e;
+  }
 }
 
 async function getWasm(): Promise<Uint8Array> {
