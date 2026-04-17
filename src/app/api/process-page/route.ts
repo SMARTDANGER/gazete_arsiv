@@ -7,13 +7,16 @@ export const dynamic = 'force-dynamic';
 let cachedWasm: Uint8Array | null = null;
 let cachedModel: Uint8Array | null = null;
 const pdfCache = new Map<number, Buffer>();
+let schemaReady = false;
 
-async function ensureSchema(): Promise<void> {
+async function ensureSchema(force = false): Promise<void> {
+  if (schemaReady && !force) return;
   try {
     await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS word_boxes JSONB DEFAULT NULL`;
     await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS image_width INTEGER DEFAULT NULL`;
     await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS image_height INTEGER DEFAULT NULL`;
     await sql`ALTER TABLE pages ADD CONSTRAINT pages_issue_page_unique UNIQUE (issue_id, page_number)`.catch(() => {});
+    schemaReady = true;
   } catch (e) {
     console.error('ensureSchema failed:', String(e));
     throw e;
@@ -156,7 +159,7 @@ export async function POST(request: Request) {
       const msg = String(e?.message || e);
       if (/column .* does not exist|relation .* does not exist|no unique|constraint/i.test(msg)) {
         console.warn('insert failed, running ensureSchema and retrying:', msg);
-        await ensureSchema();
+        await ensureSchema(true);
         await doInsert();
       } else {
         throw e;

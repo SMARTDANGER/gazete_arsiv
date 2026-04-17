@@ -234,17 +234,34 @@ export default function AdminDashboard() {
     const tag = label ? `${label} (ID ${issueId})` : `Issue ${issueId}`;
     onPage?.(0, pageCount);
 
-    for (let page = 1; page <= pageCount; page++) {
-      setOcrResult(`${tag}: sayfa ${page}/${pageCount} işleniyor...`);
-      const res = await fetch('/api/process-page', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ issue_id: issueId, page_number: page })
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(`sayfa ${page}: ${data.error}`);
-      onPage?.(page, pageCount);
-      fetchProgress();
-    }
+    const CONCURRENCY = 3;
+    let nextPage = 1;
+    let done = 0;
+    const errors: string[] = [];
+
+    const worker = async () => {
+      while (true) {
+        const page = nextPage++;
+        if (page > pageCount) return;
+        setOcrResult(`${tag}: sayfa ${page}/${pageCount} işleniyor...`);
+        try {
+          const res = await fetch('/api/process-page', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ issue_id: issueId, page_number: page })
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
+        } catch (e: any) {
+          errors.push(`sayfa ${page}: ${e.message}`);
+        }
+        done++;
+        onPage?.(done, pageCount);
+        fetchProgress();
+      }
+    };
+
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, pageCount) }, worker));
+    if (errors.length) throw new Error(errors.join('; '));
     return pageCount;
   };
 
