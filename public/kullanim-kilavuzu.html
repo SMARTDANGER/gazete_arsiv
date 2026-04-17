@@ -2,628 +2,927 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gazete Arşiv — Kullanım Kılavuzu</title>
 <style>
-  @page { size: A4; margin: 2cm; }
+  :root {
+    --bg: #0b1120;
+    --bg-2: #0f172a;
+    --panel: #111a2e;
+    --panel-2: #162037;
+    --border: #1f2a44;
+    --border-2: #2a365a;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-soft: #cbd5e1;
+    --accent: #8b5cf6;
+    --accent-2: #6366f1;
+    --accent-glow: rgba(139, 92, 246, 0.25);
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --red: #ef4444;
+    --orange: #f97316;
+    --yellow: #eab308;
+    --radius: 14px;
+  }
+
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
   body {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 13pt;
-    line-height: 1.6;
-    color: #1a1a1a;
-    max-width: 18cm;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text);
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(99,102,241,0.15), transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, rgba(139,92,246,0.12), transparent 60%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  /* Reading progress bar */
+  #okuma-cubugu {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    width: 0;
+    background: linear-gradient(90deg, var(--accent-2), var(--accent));
+    z-index: 100;
+    transition: width 80ms linear;
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  /* Top bar */
+  .ust-bar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: saturate(140%) blur(12px);
+    background: rgba(11, 17, 32, 0.75);
+    border-bottom: 1px solid var(--border);
+  }
+  .ust-bar-ic {
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 2cm 1cm;
-    background: #fff;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
   }
-  h1 {
-    font-size: 32pt;
-    color: #4f46e5;
-    border-bottom: 3px solid #4f46e5;
-    padding-bottom: 0.3em;
-    margin-top: 0;
+  .logo {
+    font-weight: 700;
+    font-size: 17px;
+    background: linear-gradient(135deg, #a78bfa, #60a5fa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 0.2px;
   }
+  .ust-bar .eylem {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+  }
+  .ust-btn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border-2);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 160ms ease;
+  }
+  .ust-btn:hover {
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .ust-btn.birincil {
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    border-color: transparent;
+    color: #fff;
+  }
+
+  /* Layout */
+  .sayfa {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 32px;
+  }
+
+  /* Sidebar TOC */
+  aside.toc {
+    position: sticky;
+    top: 80px;
+    align-self: start;
+    height: calc(100vh - 100px);
+    overflow-y: auto;
+    padding: 20px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  aside.toc h4 {
+    margin: 0 0 12px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-dim);
+  }
+  aside.toc a {
+    display: block;
+    padding: 8px 12px;
+    margin: 2px 0;
+    font-size: 14px;
+    color: var(--text-soft);
+    text-decoration: none;
+    border-radius: 8px;
+    border-left: 2px solid transparent;
+    transition: all 120ms ease;
+  }
+  aside.toc a:hover {
+    background: var(--panel-2);
+    color: #fff;
+  }
+  aside.toc a.aktif {
+    background: var(--accent-glow);
+    color: #fff;
+    border-left-color: var(--accent);
+  }
+  aside.toc::-webkit-scrollbar { width: 6px; }
+  aside.toc::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+
+  /* Main content */
+  main {
+    min-width: 0;
+  }
+
+  /* Hero */
+  .hero {
+    padding: 48px 40px;
+    margin-bottom: 36px;
+    background:
+      radial-gradient(600px 300px at 80% 0%, rgba(139,92,246,0.25), transparent 70%),
+      linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
+    border: 1px solid var(--border-2);
+    border-radius: var(--radius);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "";
+    position: absolute;
+    top: -50%; right: -20%;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, var(--accent-glow), transparent 60%);
+    filter: blur(40px);
+    pointer-events: none;
+  }
+  .hero .rozet {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--accent-glow);
+    color: #c4b5fd;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 18px;
+    border: 1px solid rgba(139,92,246,0.4);
+  }
+  .hero h1 {
+    margin: 0 0 10px;
+    font-size: 44px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff, #c4b5fd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero .altbaslik {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text-dim);
+    max-width: 600px;
+  }
+
+  /* Cards / sections */
+  section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 36px;
+    margin: 0 0 24px;
+    scroll-margin-top: 90px;
+  }
+
   h2 {
-    font-size: 22pt;
-    color: #1e40af;
-    margin-top: 2em;
-    border-left: 6px solid #1e40af;
-    padding-left: 0.5em;
-    page-break-after: avoid;
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0 0 20px;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  h2 .numara {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 4px 12px var(--accent-glow);
   }
   h3 {
-    font-size: 17pt;
-    color: #312e81;
-    margin-top: 1.5em;
-    page-break-after: avoid;
-  }
-  p { margin: 0.8em 0; }
-  ol, ul { margin: 0.8em 0; padding-left: 1.8em; }
-  li { margin: 0.5em 0; }
-  .kapak {
-    text-align: center;
-    padding: 4cm 0 3cm 0;
-    page-break-after: always;
-  }
-  .kapak h1 {
-    font-size: 40pt;
-    border: none;
-    margin-bottom: 0.3em;
-  }
-  .kapak .altbaslik {
-    font-size: 18pt;
-    color: #64748b;
-    font-style: italic;
-  }
-  .kapak .kutu {
-    margin-top: 5cm;
-    padding: 1em 2em;
-    background: #eef2ff;
-    border: 2px solid #4f46e5;
-    border-radius: 12px;
-    display: inline-block;
-  }
-  .ipucu {
-    background: #fef3c7;
-    border-left: 5px solid #f59e0b;
-    padding: 0.8em 1.2em;
-    margin: 1em 0;
-    border-radius: 4px;
-  }
-  .uyari {
-    background: #fee2e2;
-    border-left: 5px solid #dc2626;
-    padding: 0.8em 1.2em;
-    margin: 1em 0;
-    border-radius: 4px;
-  }
-  .bilgi {
-    background: #dbeafe;
-    border-left: 5px solid #2563eb;
-    padding: 0.8em 1.2em;
-    margin: 1em 0;
-    border-radius: 4px;
-  }
-  .adim {
-    background: #f1f5f9;
-    padding: 1em 1.5em;
-    margin: 1em 0;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-  }
-  .adim-no {
-    display: inline-block;
-    background: #4f46e5;
-    color: #fff;
-    width: 2em;
-    height: 2em;
-    border-radius: 50%;
-    text-align: center;
-    line-height: 2em;
-    font-weight: 700;
-    margin-right: 0.5em;
-    font-family: Arial, sans-serif;
-  }
-  code {
-    background: #f1f5f9;
-    padding: 0.1em 0.4em;
-    border-radius: 4px;
-    font-size: 11pt;
-    color: #be185d;
-  }
-  .buton {
-    display: inline-block;
-    background: #4f46e5;
-    color: #fff;
-    padding: 0.2em 0.8em;
-    border-radius: 6px;
+    font-size: 19px;
     font-weight: 600;
-    font-family: Arial, sans-serif;
-    font-size: 12pt;
+    margin: 28px 0 12px;
+    color: #f1f5f9;
   }
-  .buton-turuncu { background: #ea580c; }
-  .buton-kirmizi { background: #dc2626; }
-  .buton-mor { background: #8b5cf6; }
-  .sayfa-sonu { page-break-after: always; }
-  .icindekiler {
-    background: #f8fafc;
-    padding: 1.5em 2em;
+  p { margin: 10px 0; color: var(--text-soft); }
+  ul, ol { padding-left: 22px; color: var(--text-soft); }
+  li { margin: 6px 0; }
+  b, strong { color: #fff; font-weight: 600; }
+
+  a { color: #a78bfa; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  code {
+    background: var(--panel-2);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    color: #f0abfc;
+    border: 1px solid var(--border);
+  }
+
+  /* Step cards */
+  .adim {
+    display: flex;
+    gap: 14px;
+    padding: 16px 18px;
+    margin: 10px 0;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: border-color 160ms ease;
+  }
+  .adim:hover { border-color: var(--border-2); }
+  .adim-no {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px var(--accent-glow);
+  }
+  .adim > div { flex: 1; }
+
+  /* Info boxes */
+  .kutu {
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-radius: 10px;
+    border-left: 4px solid;
+    display: flex;
+    gap: 12px;
+  }
+  .kutu .simge {
+    flex-shrink: 0;
+    font-size: 20px;
+    line-height: 1.2;
+  }
+  .kutu .icerik { flex: 1; }
+  .kutu b { display: block; margin-bottom: 4px; }
+
+  .bilgi {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: var(--blue);
+  }
+  .bilgi b { color: #93c5fd; }
+
+  .ipucu {
+    background: rgba(234, 179, 8, 0.08);
+    border-color: var(--yellow);
+  }
+  .ipucu b { color: #fde047; }
+
+  .uyari {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: var(--red);
+  }
+  .uyari b { color: #fca5a5; }
+
+  /* Fake buttons (representing UI elements) */
+  .buton {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
     border-radius: 8px;
-    border: 1px solid #e2e8f0;
+    font-weight: 600;
+    font-size: 13px;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    color: #fff;
+    box-shadow: 0 2px 6px var(--accent-glow);
   }
-  .icindekiler ol { padding-left: 1.5em; }
-  .icindekiler li { margin: 0.4em 0; font-size: 14pt; }
+  .buton-turuncu { background: linear-gradient(135deg, #ea580c, #f97316); box-shadow: 0 2px 6px rgba(249,115,22,0.35); }
+  .buton-kirmizi { background: linear-gradient(135deg, #b91c1c, #ef4444); box-shadow: 0 2px 6px rgba(239,68,68,0.35); }
+  .buton-mor { background: linear-gradient(135deg, #7c3aed, #a855f7); box-shadow: 0 2px 6px rgba(168,85,247,0.35); }
+  .buton-yesil { background: linear-gradient(135deg, #15803d, #22c55e); box-shadow: 0 2px 6px rgba(34,197,94,0.35); }
+
+  /* Tables */
   table {
-    border-collapse: collapse;
     width: 100%;
-    margin: 1em 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 16px 0;
+    background: var(--panel-2);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
   }
   th, td {
-    border: 1px solid #cbd5e1;
-    padding: 0.6em 0.8em;
+    padding: 12px 16px;
     text-align: left;
+    border-bottom: 1px solid var(--border);
   }
-  th { background: #e0e7ff; }
-  .sss soru {
-    display: block;
+  tr:last-child td { border-bottom: none; }
+  th {
+    background: var(--bg-2);
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+  }
+  tbody tr:hover { background: rgba(139, 92, 246, 0.04); }
+
+  /* FAQ (collapsible) */
+  details.sss-item {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0;
+    margin: 10px 0;
+    overflow: hidden;
+    transition: border-color 160ms ease;
+  }
+  details.sss-item[open] { border-color: var(--accent); }
+  details.sss-item summary {
+    list-style: none;
+    padding: 16px 20px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    user-select: none;
+  }
+  details.sss-item summary::-webkit-details-marker { display: none; }
+  details.sss-item summary::before {
+    content: "+";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--accent-glow);
+    color: var(--accent);
+    font-size: 16px;
     font-weight: 700;
-    color: #1e40af;
-    margin-top: 1em;
+    flex-shrink: 0;
+    transition: transform 200ms ease;
   }
+  details.sss-item[open] summary::before { content: "−"; transform: rotate(180deg); }
+  details.sss-item .cevap {
+    padding: 0 20px 18px 56px;
+    color: var(--text-soft);
+  }
+
+  /* Back to top */
+  #yukari {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 200ms ease;
+    pointer-events: none;
+    box-shadow: 0 4px 16px var(--accent-glow);
+    z-index: 40;
+  }
+  #yukari.goster {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  #yukari:hover { transform: translateY(-4px); }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 32px 24px;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  /* Mobile */
+  @media (max-width: 900px) {
+    .sayfa { grid-template-columns: 1fr; padding: 16px; }
+    aside.toc { display: none; }
+    .hero { padding: 32px 24px; }
+    .hero h1 { font-size: 32px; }
+    section { padding: 24px 20px; }
+    h2 { font-size: 22px; }
+  }
+
+  /* Print */
   @media print {
-    body { padding: 0; }
-    h2 { page-break-before: auto; }
+    #okuma-cubugu, .ust-bar, aside.toc, #yukari { display: none !important; }
+    body {
+      background: #fff !important;
+      color: #111 !important;
+    }
+    .sayfa { display: block; max-width: 100%; padding: 0; }
+    section, .hero {
+      background: #fff !important;
+      border: 1px solid #ddd !important;
+      page-break-inside: avoid;
+      box-shadow: none !important;
+      color: #111 !important;
+    }
+    section { margin-bottom: 16px; }
+    .hero h1 { color: #4f46e5 !important; -webkit-text-fill-color: #4f46e5 !important; }
+    .hero .altbaslik, p, li, .adim > div { color: #222 !important; }
+    h2, h3, b, strong { color: #111 !important; }
+    .adim, table, details.sss-item, .kutu {
+      background: #f8fafc !important;
+      border-color: #ddd !important;
+      color: #111 !important;
+    }
+    th { background: #eef2ff !important; color: #334155 !important; }
+    code { background: #f1f5f9 !important; color: #be185d !important; border-color: #e2e8f0 !important; }
+    details.sss-item { border-color: #ddd !important; }
+    details.sss-item .cevap, details.sss-item summary { color: #111 !important; }
+    details.sss-item[open] summary::before,
+    details.sss-item summary::before { background: #eef2ff !important; color: #4f46e5 !important; }
+    h2 .numara, .adim-no { background: #4f46e5 !important; color: #fff !important; box-shadow: none !important; }
+    a { color: #4f46e5 !important; }
   }
 </style>
 </head>
 <body>
 
-<div class="kapak">
-  <h1>Gazete Arşiv</h1>
-  <div class="altbaslik">Tarihi Türk Gazetelerinde Arama Sistemi</div>
-  <div class="altbaslik" style="margin-top: 0.5em;">Kullanım Kılavuzu</div>
-  <div class="kutu">
-    <div style="font-size: 14pt; color: #4f46e5; font-weight: 700;">Her Yaş İçin Uygundur</div>
-    <div style="font-size: 12pt; margin-top: 0.3em;">Adım adım, resimli anlatım</div>
+<div id="okuma-cubugu"></div>
+
+<div class="ust-bar">
+  <div class="ust-bar-ic">
+    <span class="logo">Gazete Arşiv</span>
+    <span style="color: var(--text-dim); font-size: 13px;">Kullanım Kılavuzu</span>
+    <div class="eylem">
+      <button class="ust-btn" onclick="window.print()">PDF olarak kaydet</button>
+      <a class="ust-btn birincil" href="/">Ana Sayfa →</a>
+    </div>
   </div>
 </div>
 
-<h2>İçindekiler</h2>
-<div class="icindekiler">
-  <ol>
-    <li>Gazete Arşiv Nedir?</li>
-    <li>Siteye Nasıl Girilir?</li>
-    <li>Arama Sayfası — Eski Gazete Nasıl Aranır?</li>
-    <li>Admin Paneli Nedir?</li>
-    <li>Sekme 1 — Kaynaklar (Gazete Tanımlama)</li>
-    <li>Sekme 2 — Scrape (Gazete Linklerini Çekme)</li>
-    <li>Sekme 3 — OCR İşle (Metne Dönüştürme)</li>
-    <li>Sekme 4 — İstatistik</li>
-    <li>Sık Karşılaşılan Sorular</li>
-    <li>Sözlük (Teknik Terimler)</li>
-  </ol>
+<div class="sayfa">
+  <aside class="toc">
+    <h4>İçindekiler</h4>
+    <a href="#bolum-1">1. Gazete Arşiv Nedir?</a>
+    <a href="#bolum-2">2. Siteye Nasıl Girilir?</a>
+    <a href="#bolum-3">3. Arama Sayfası</a>
+    <a href="#bolum-4">4. Admin Paneli</a>
+    <a href="#bolum-5">5. Kaynaklar Sekmesi</a>
+    <a href="#bolum-6">6. Scrape Sekmesi</a>
+    <a href="#bolum-7">7. OCR İşle Sekmesi</a>
+    <a href="#bolum-8">8. İstatistik Sekmesi</a>
+    <a href="#bolum-9">9. Sık Sorulan Sorular</a>
+    <a href="#bolum-10">10. Sözlük</a>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <span class="rozet">HER YAŞ İÇİN</span>
+      <h1>Tarihi Türk gazetelerinde<br>kelime arama sistemi</h1>
+      <p class="altbaslik">
+        Yüz yıl önceki bir haberi Google'da arar gibi aratın. Bu kılavuz, sistemi
+        nasıl kullanacağınızı adım adım anlatır.
+      </p>
+    </div>
+
+    <section id="bolum-1">
+      <h2><span class="numara">1</span> Gazete Arşiv Nedir?</h2>
+      <p>
+        Bu sistem, eski Türk gazetelerinin (örneğin 1929 Milliyet Gazetesi) taranmış
+        PDF dosyalarını bilgisayarın okuyabildiği metne dönüştürür. Böylece yüz yıl
+        önceki bir haberi tıpkı Google'da arar gibi aratabilirsiniz.
+      </p>
+      <p>Sistem iki ana bölümden oluşur:</p>
+      <ul>
+        <li><b>Ana Sayfa (Arama):</b> Herkesin kullandığı yer. Kelime yaz, ara.</li>
+        <li><b>Admin Paneli:</b> Yönetici kısmı. Yeni gazete ekleme, tarama yapma.</li>
+      </ul>
+      <div class="kutu bilgi">
+        <span class="simge">ℹ</span>
+        <div class="icerik">
+          <b>Kısaca</b>
+          Eski bir kelimeyi (mesela "tramvay") yazarsın, sistem sana o kelimenin
+          geçtiği eski gazete sayfalarını bulur.
+        </div>
+      </div>
+    </section>
+
+    <section id="bolum-2">
+      <h2><span class="numara">2</span> Siteye Nasıl Girilir?</h2>
+      <div class="adim"><span class="adim-no">1</span><div><b>Tarayıcınızı açın.</b> Google Chrome, Firefox, Edge veya Safari — hepsi olur.</div></div>
+      <div class="adim"><span class="adim-no">2</span><div><b>Adres çubuğuna site adresini yazın</b> ve Enter tuşuna basın.</div></div>
+      <div class="adim"><span class="adim-no">3</span><div><b>Ana sayfa açılacak.</b> Ortada büyük "Gazete Arşiv" yazısı ve bir arama kutusu göreceksiniz.</div></div>
+      <div class="kutu ipucu">
+        <span class="simge">★</span>
+        <div class="icerik">
+          <b>İpucu</b>
+          Siteyi sık kullanacaksanız, tarayıcınızda yer imlerine ekleyin. Chrome'da
+          sağ üstteki ⭐ yıldıza tıklayın.
+        </div>
+      </div>
+    </section>
+
+    <section id="bolum-3">
+      <h2><span class="numara">3</span> Arama Sayfası — Eski Gazete Nasıl Aranır?</h2>
+      <p>Ana sayfa en basit yerdir. Üç şey vardır:</p>
+      <ul>
+        <li><b>Arama kutusu:</b> "Aranacak kelime..." yazan yer.</li>
+        <li><b>Gazete seçici:</b> "Tüm Gazeteler" yazan açılır menü.</li>
+        <li><span class="buton">Ara</span> düğmesi.</li>
+      </ul>
+
+      <h3>Adım adım arama yapma</h3>
+      <div class="adim"><span class="adim-no">1</span><div><b>Arama kutusuna kelime yazın.</b> Örnek: <code>İstanbul</code>, <code>Atatürk</code>, <code>tramvay</code>, <code>deprem</code>.</div></div>
+      <div class="adim"><span class="adim-no">2</span><div><b>Gazete seçin (isteğe bağlı).</b> "Tüm Gazeteler" bırakırsanız, tüm kaynaklarda aranır. Belirli bir gazete seçerseniz sadece onda arar.</div></div>
+      <div class="adim"><span class="adim-no">3</span><div><span class="buton">Ara</span> düğmesine basın <b>veya</b> klavyeden Enter'a basın.</div></div>
+      <div class="adim"><span class="adim-no">4</span><div><b>Sonuçlar liste halinde gelir.</b> Her sonuca tıkladığınızda, o kelimenin geçtiği sayfa sarı renkle işaretli şekilde açılır.</div></div>
+
+      <div class="kutu ipucu">
+        <span class="simge">★</span>
+        <div class="icerik">
+          <b>İpucu — Tırnak İşareti</b>
+          Birden fazla kelimeyi tam sırayla aramak için tırnak içinde yazın:
+          <code>"Mustafa Kemal"</code>. Böylece sadece bu iki kelimenin yan yana
+          geçtiği yerleri bulur.
+        </div>
+      </div>
+      <div class="kutu ipucu">
+        <span class="simge">★</span>
+        <div class="icerik">
+          <b>İpucu — Eski Yazım</b>
+          1920'lerin gazetesinde "İstanbul" bazen "Istanbul" yazmış olabilir.
+          Farklı yazımları da deneyin.
+        </div>
+      </div>
+    </section>
+
+    <section id="bolum-4">
+      <h2><span class="numara">4</span> Admin Paneli Nedir?</h2>
+      <p>
+        Admin Paneli, <b>yönetici</b> tarafıdır. Sadece sistemi yönetenler kullanır.
+        Normal arama yapan kişiler buraya girmek zorunda değildir.
+      </p>
+      <p>Admin Paneline girmek için:</p>
+      <div class="adim"><span class="adim-no">1</span><div>Ana sayfada <b>sağ üst köşede</b> bulunan <span class="buton">Admin →</span> düğmesine tıklayın.</div></div>
+
+      <p>Admin Panelinde <b>4 sekme</b> vardır:</p>
+      <table>
+        <thead><tr><th>Sekme</th><th>Ne İşe Yarar?</th></tr></thead>
+        <tbody>
+          <tr><td><b>Kaynaklar</b></td><td>Sisteme yeni bir gazete (Milliyet, Cumhuriyet vs.) tanımlanır</td></tr>
+          <tr><td><b>Scrape</b></td><td>Tanımlanan gazetenin tüm sayı linklerini internetten toplar</td></tr>
+          <tr><td><b>OCR İşle</b></td><td>PDF'leri aratılabilir metne dönüştürür</td></tr>
+          <tr><td><b>İstatistik</b></td><td>Kaç sayı, kaç sayfa işlendi gösterir</td></tr>
+        </tbody>
+      </table>
+
+      <div class="kutu bilgi">
+        <span class="simge">ℹ</span>
+        <div class="icerik">
+          <b>Normal Kullanım Sırası</b>
+          Önce Kaynak ekle → sonra Scrape yap → sonra OCR çalıştır → son olarak
+          İstatistiği kontrol et.
+        </div>
+      </div>
+    </section>
+
+    <section id="bolum-5">
+      <h2><span class="numara">5</span> Sekme 1 — Kaynaklar (Gazete Tanımlama)</h2>
+      <p>
+        Bu ekranda sisteme yeni bir gazete eklenir. Örneğin İstanbul Üniversitesi
+        kütüphanesindeki Milliyet Gazetesi arşivi.
+      </p>
+
+      <h3>Yeni Kaynak Ekleme</h3>
+      <div class="adim"><span class="adim-no">1</span><div><b>Gazete Adı:</b> Kısa bir isim yazın. Örnek: <code>Milliyet</code>.</div></div>
+      <div class="adim"><span class="adim-no">2</span><div><b>Ana URL:</b> Arşiv sitesinin ana adresi. Örnek: <code>https://nek.istanbul.edu.tr</code>.</div></div>
+      <div class="adim"><span class="adim-no">3</span><div><b>Index Sayfası URL:</b> Gazetenin tüm sayılarının listelendiği sayfa.</div></div>
+      <div class="adim"><span class="adim-no">4</span><div><b>PDF Link Selector:</b> Sayfada PDF linklerinin bulunduğu yeri belirten teknik kod. Örnek: <code>table td a[href$='.pdf']</code>.</div></div>
+      <div class="adim"><span class="adim-no">5</span><div><b>Tarih Selector (opsiyonel):</b> Tarih bilgisinin olduğu yer. Boş bırakırsanız link metni kullanılır.</div></div>
+      <div class="adim"><span class="adim-no">6</span><div><b>Notlar:</b> Kaynak hakkında hatırlatmalar yazabilirsiniz.</div></div>
+      <div class="adim"><span class="adim-no">7</span><div><span class="buton">Ekle</span> düğmesine basın.</div></div>
+
+      <div class="kutu uyari">
+        <span class="simge">⚠</span>
+        <div class="icerik">
+          <b>Uyarı</b>
+          Selector kavramı tekniktir. Bilmiyorsanız, sistemi kuran kişiden yardım
+          isteyin. Yanlış selector → link bulunamaz.
+        </div>
+      </div>
+
+      <h3>Mevcut Kaynaklar</h3>
+      <p>Alt kısımda eklediğiniz kaynaklar listelenir. Her kaynak için iki düğme var:</p>
+      <ul>
+        <li><span class="buton">Düzenle</span> — Kaynak bilgilerini günceller.</li>
+        <li><span class="buton">Selektörü Test Et</span> — Selector'ın doğru çalışıp çalışmadığını 5 örnekle gösterir.</li>
+      </ul>
+
+      <div class="kutu ipucu">
+        <span class="simge">★</span>
+        <div class="icerik">
+          <b>İpucu</b>
+          Yeni kaynak eklerken önce <b>Selektörü Test Et</b> ile deneyin. Sonuç
+          gelmezse selektör yanlıştır.
+        </div>
+      </div>
+    </section>
+
+    <section id="bolum-6">
+      <h2><span class="numara">6</span> Sekme 2 — Scrape (Gazete Linklerini Çekme)</h2>
+      <p>
+        "Scrape" (skreyp okunur) = toplama. Bu sekmede, seçilen gazetenin tüm PDF
+        linkleri internetten toplanır ve veritabanına kaydedilir.
+      </p>
+
+      <h3>Link Toplama</h3>
+      <div class="adim"><span class="adim-no">1</span><div><b>Kaynak Seç:</b> Açılır menüden gazeteyi seçin (örnek: Milliyet).</div></div>
+      <div class="adim"><span class="adim-no">2</span><div><span class="buton">Linkleri Çek</span> düğmesine basın.</div></div>
+      <div class="adim"><span class="adim-no">3</span><div><b>Bekleyin.</b> Sistem siteye gidip tüm PDF linklerini bulur. Bu 10-30 saniye sürer.</div></div>
+      <div class="adim"><span class="adim-no">4</span><div><b>Sonuç mesajı</b> çıkar: "X link bulundu, Y yeni sayı eklendi".</div></div>
+
+      <h3>Listeyi Görüntüleme</h3>
+      <p>Alt kısımda "Son Eklenen Sayılar" tablosu vardır. Her satır bir gazete sayısıdır. Durum sütunu:</p>
+      <ul>
+        <li><span style="color: #fca5a5; font-weight: 700;">Bekliyor</span> — Henüz OCR yapılmadı.</li>
+        <li><span style="color: #86efac; font-weight: 700;">İşlendi (N sayfa)</span> — OCR tamamlandı.</li>
+      </ul>
+
+      <h3>Silme Düğmeleri</h3>
+      <div class="kutu uyari">
+        <span class="simge">⚠</span>
+        <div class="icerik">
+          <b>DİKKAT</b>
+          Bu düğmeler verileri <b>kalıcı olarak</b> siler. Geri alınamaz!
+        </div>
+      </div>
+      <ul>
+        <li><span class="buton buton-kirmizi">Tüm Sayıları Sil</span> — Bu kaynağın TÜM sayılarını siler (linkler + OCR verileri).</li>
+        <li><span class="buton buton-turuncu">İşlenmişleri Sil</span> — Sadece OCR yapılmış olanları siler.</li>
+      </ul>
+
+      <h3>Sayfalama</h3>
+      <p>100 sayıdan fazla varsa altta sayfa numaraları çıkar. Önceki/Sonraki ile gezebilirsiniz.</p>
+    </section>
+
+    <section id="bolum-7">
+      <h2><span class="numara">7</span> Sekme 3 — OCR İşle (Metne Dönüştürme)</h2>
+      <p>
+        <b>OCR</b> = Optical Character Recognition = Bilgisayarın resmi okuyup
+        metne çevirmesi. Bu en <b>önemli</b> ve en <b>uzun süren</b> adımdır.
+      </p>
+
+      <div class="kutu bilgi">
+        <span class="simge">ℹ</span>
+        <div class="icerik">
+          <b>Neden Uzun Sürer?</b>
+          Her sayfa ayrı ayrı okunur. Bir sayfa ~15-30 saniye. 10 sayfalık bir
+          gazete ~3-5 dakika. 100 gazete işlemek saatler sürer.
+        </div>
+      </div>
+
+      <h3>OCR İlerleme Durumu</h3>
+      <p>En üstte yeşil bir ilerleme çubuğu vardır. Kaç sayfa tamamlandı, ne kadar kaldı gösterir. Sayılar:</p>
+      <ul>
+        <li><b style="color: #fca5a5;">Bekliyor:</b> Henüz OCR yapılmamış sayfa sayısı.</li>
+        <li><b style="color: #86efac;">Tamamlandı:</b> OCR bitmiş sayfa sayısı.</li>
+        <li><b>Toplam:</b> Kaynaktaki toplam sayı.</li>
+      </ul>
+
+      <h3>Toplu OCR İşlemi</h3>
+      <p>Bekleyen sayıları otomatik sıraya koyar ve işler. Tavsiye edilen yoldur.</p>
+      <div class="adim"><span class="adim-no">1</span><div><b>Kaynak Seçin</b> (açılır menüden).</div></div>
+      <div class="adim"><span class="adim-no">2</span><div><b>Limit girin:</b> Kaç sayı işlenecek? Başlangıç için <code>3</code> veya <code>5</code> deneyin. Sistem düzgün çalıştığını görürseniz büyütün.</div></div>
+      <div class="adim"><span class="adim-no">3</span><div><span class="buton buton-mor">Toplu İşle</span> düğmesine basın.</div></div>
+      <div class="adim"><span class="adim-no">4</span><div><b>Bekleyin.</b> Mor renkli "Toplu İşlem İlerlemesi" çubuğu hangi sayının işlendiğini gösterir.</div></div>
+
+      <div class="kutu uyari">
+        <span class="simge">⚠</span>
+        <div class="icerik">
+          <b>ÇOK ÖNEMLİ</b>
+          OCR çalışırken <b>tarayıcı sekmesini kapatmayın</b>! Kapatırsanız işlem
+          durur. Bilgisayarın uyumasını da engelleyin.
+        </div>
+      </div>
+
+      <h3>Manuel Sayı İşle</h3>
+      <p>Tek bir sayı ID'si girerek zorla işletmek için. Genelde test amaçlı kullanılır.</p>
+      <div class="adim"><span class="adim-no">1</span><div><b>Sayı ID:</b> Scrape sekmesindeki listeden ID numarasını alın.</div></div>
+      <div class="adim"><span class="adim-no">2</span><div><span class="buton">Tekil İşle</span> düğmesine basın.</div></div>
+
+      <h3>İşlenmişleri Sıfırla</h3>
+      <div class="kutu uyari">
+        <span class="simge">⚠</span>
+        <div class="icerik">
+          <b>TEHLİKE</b>
+          <span class="buton buton-turuncu">Seçili Kaynağın OCR Verilerini Sıfırla</span>
+          düğmesi, o kaynaktaki tüm OCR sonuçlarını siler. Gazete linkleri kalır,
+          ama metin içerikleri silinir. Yeniden taramak gerekir (saatler sürer).
+          Kullanmadan önce <b>iki kez düşünün</b>.
+        </div>
+      </div>
+    </section>
+
+    <section id="bolum-8">
+      <h2><span class="numara">8</span> Sekme 4 — İstatistik</h2>
+      <p>Bu sekme sadece <b>bilgilendirme</b> içindir. Hiçbir buton yoktur.</p>
+      <p>Dört büyük kutu:</p>
+      <ul>
+        <li><b>Toplam Kaynak:</b> Sisteme kaç gazete tanımlı.</li>
+        <li><b>Toplam Sayı (Issue):</b> Tüm kaynaklarda kaç gazete sayısı var.</li>
+        <li><b>Toplam Sayfa:</b> OCR'a girmiş sayfa sayısı.</li>
+        <li><b>İşlenmiş Sayfa (OCR):</b> Başarıyla metne dönmüş sayfa sayısı (yeşil).</li>
+      </ul>
+      <p>Altta <b>Kaynak Bazlı Kırılım</b> tablosu — her gazete için kaç sayı ve sayfa olduğunu gösterir.</p>
+      <div class="kutu ipucu">
+        <span class="simge">★</span>
+        <div class="icerik">
+          <b>Kullanım</b>
+          OCR çalıştırdıktan sonra buraya gelin. Beklediğiniz rakamlar çıktı mı
+          kontrol edin.
+        </div>
+      </div>
+    </section>
+
+    <section id="bolum-9">
+      <h2><span class="numara">9</span> Sık Karşılaşılan Sorular</h2>
+
+      <details class="sss-item">
+        <summary>Arama yaptım ama sonuç çıkmadı. Neden?</summary>
+        <div class="cevap">
+          <p>Muhtemel sebepler:</p>
+          <ul>
+            <li>Kelime o gazetelerde hiç geçmiyor.</li>
+            <li>OCR sırasında kelime yanlış okunmuş (eski yazımda sık olur).</li>
+            <li>O gazete sayısı henüz OCR'dan geçmemiş.</li>
+          </ul>
+          <p>Farklı bir kelime veya eş anlamlısıyla deneyin.</p>
+        </div>
+      </details>
+
+      <details class="sss-item">
+        <summary>OCR çok yavaş. Hızlandırabilir miyiz?</summary>
+        <div class="cevap">
+          <p>
+            Evet. Sistemde "paralel işlem" ayarı vardır. Aynı anda 3 sayfa birden
+            işlenir. Daha hızlı olmaz çünkü sunucu sınırları var. 2500 gazete gibi
+            büyük sayı için özel kurulum gerekir — yöneticiyle görüşün.
+          </p>
+        </div>
+      </details>
+
+      <details class="sss-item">
+        <summary>PDF'i direkt okuyabilir miyim?</summary>
+        <div class="cevap">
+          <p>
+            Evet. Arama sonucuna tıkladığınızda sayfa resmi açılır. Aranan kelime
+            sarı renkle işaretlidir.
+          </p>
+        </div>
+      </details>
+
+      <details class="sss-item">
+        <summary>Yanlış bir kelime ekledim, geri alabilir miyim?</summary>
+        <div class="cevap">
+          <p>Admin panelinden silebilirsiniz. Scrape sekmesindeki silme düğmelerine dikkat.</p>
+        </div>
+      </details>
+
+      <details class="sss-item">
+        <summary>Mobil telefondan çalışır mı?</summary>
+        <div class="cevap">
+          <p>Ana sayfa (arama) çalışır. Admin paneli mobil için tasarlanmamıştır, bilgisayar kullanın.</p>
+        </div>
+      </details>
+
+      <details class="sss-item">
+        <summary>Şifre unuttum.</summary>
+        <div class="cevap">
+          <p>Sistem yöneticisine başvurun.</p>
+        </div>
+      </details>
+    </section>
+
+    <section id="bolum-10">
+      <h2><span class="numara">10</span> Sözlük (Teknik Terimler)</h2>
+      <table>
+        <thead><tr><th>Terim</th><th>Anlamı</th></tr></thead>
+        <tbody>
+          <tr><td><b>OCR</b></td><td>Resmi metne çevirme işlemi (Optical Character Recognition)</td></tr>
+          <tr><td><b>PDF</b></td><td>Yaygın bir belge dosyası türü</td></tr>
+          <tr><td><b>URL</b></td><td>İnternet adresi (örn: https://...)</td></tr>
+          <tr><td><b>Scrape</b></td><td>Siteden veri toplama işlemi</td></tr>
+          <tr><td><b>Selector</b></td><td>Sayfadaki belirli bir yeri işaret eden kod</td></tr>
+          <tr><td><b>Kaynak</b></td><td>Bir gazete arşivinin tanımı</td></tr>
+          <tr><td><b>Issue</b></td><td>Bir gazete sayısı (örn: 5 Ocak 1929 Milliyet)</td></tr>
+          <tr><td><b>Page</b></td><td>Sayı içindeki tek bir sayfa</td></tr>
+          <tr><td><b>Admin</b></td><td>Yönetici</td></tr>
+          <tr><td><b>Tarayıcı</b></td><td>Chrome, Firefox gibi internet gezme programı</td></tr>
+          <tr><td><b>Veritabanı</b></td><td>Bilgilerin saklandığı dijital dolap</td></tr>
+          <tr><td><b>Cache</b></td><td>Geçici hafıza, hızlanma için</td></tr>
+          <tr><td><b>Diacritic</b></td><td>Türkçe'deki ç, ğ, ı, ö, ş, ü gibi harfler</td></tr>
+        </tbody>
+      </table>
+
+      <div class="kutu bilgi" style="margin-top: 28px;">
+        <span class="simge">✿</span>
+        <div class="icerik">
+          <b>Teşekkürler!</b>
+          Bu kılavuz Gazete Arşiv sisteminin kullanımı içindir. Sorularınız olursa
+          sistem yöneticisine başvurun. İyi araştırmalar!
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Gazete Arşiv — Kullanım Kılavuzu v2.0<br>
+      Bu belgeyi üstteki <b>PDF olarak kaydet</b> düğmesiyle veya Ctrl+P (Windows) / Cmd+P (Mac) ile indirebilirsiniz.
+    </footer>
+  </main>
 </div>
 
-<h2>1. Gazete Arşiv Nedir?</h2>
-<p>
-Bu sistem, eski Türk gazetelerinin (örneğin 1929 Milliyet Gazetesi) taranmış
-PDF dosyalarını bilgisayarın okuyabildiği metne dönüştürür. Böylece yüz yıl
-önceki bir haberi tıpkı Google'da arar gibi aratabilirsiniz.
-</p>
-<p>Sistem iki ana bölümden oluşur:</p>
-<ul>
-  <li><b>Ana Sayfa (Arama):</b> Herkesin kullandığı yer. Kelime yaz, ara.</li>
-  <li><b>Admin Paneli:</b> Yönetici kısmı. Yeni gazete ekleme, tarama yapma.</li>
-</ul>
-
-<div class="bilgi">
-  <b>Kısaca:</b> Eski bir kelimeyi (mesela "tramvay") yazarsın, sistem sana o
-  kelimenin geçtiği eski gazete sayfalarını bulur.
-</div>
-
-<h2>2. Siteye Nasıl Girilir?</h2>
-
-<div class="adim">
-  <span class="adim-no">1</span>
-  <b>Tarayıcınızı açın.</b> Google Chrome, Firefox, Edge veya Safari — hepsi olur.
-</div>
-
-<div class="adim">
-  <span class="adim-no">2</span>
-  <b>Adres çubuğuna site adresini yazın</b> ve Enter tuşuna basın.
-</div>
-
-<div class="adim">
-  <span class="adim-no">3</span>
-  <b>Ana sayfa açılacak.</b> Ortada büyük "Gazete Arşiv" yazısı ve bir arama
-  kutusu göreceksiniz.
-</div>
-
-<div class="ipucu">
-  <b>İpucu:</b> Siteyi sık kullanacaksanız, tarayıcınızda yer imlerine ekleyin.
-  Chrome'da sağ üstteki ⭐ yıldıza tıklayın.
-</div>
-
-<div class="sayfa-sonu"></div>
-
-<h2>3. Arama Sayfası — Eski Gazete Nasıl Aranır?</h2>
-
-<p>Ana sayfa en basit yerdir. Üç şey vardır:</p>
-
-<ul>
-  <li><b>Arama kutusu:</b> "Aranacak kelime..." yazan yer.</li>
-  <li><b>Gazete seçici:</b> "Tüm Gazeteler" yazan açılır menü.</li>
-  <li><span class="buton">Ara</span> düğmesi.</li>
-</ul>
-
-<h3>Adım adım arama yapma</h3>
-
-<div class="adim">
-  <span class="adim-no">1</span>
-  <b>Arama kutusuna kelime yazın.</b> Örnek: <code>İstanbul</code>, <code>Atatürk</code>,
-  <code>tramvay</code>, <code>deprem</code>.
-</div>
-
-<div class="adim">
-  <span class="adim-no">2</span>
-  <b>Gazete seçin (isteğe bağlı).</b> "Tüm Gazeteler" bırakırsanız, tüm
-  kaynaklarda aranır. Belirli bir gazete seçerseniz sadece onda arar.
-</div>
-
-<div class="adim">
-  <span class="adim-no">3</span>
-  <span class="buton">Ara</span> düğmesine basın <b>veya</b> klavyeden Enter'a basın.
-</div>
-
-<div class="adim">
-  <span class="adim-no">4</span>
-  <b>Sonuçlar liste halinde gelir.</b> Her sonuca tıkladığınızda, o kelimenin
-  geçtiği sayfa sarı renkle işaretli şekilde açılır.
-</div>
-
-<div class="ipucu">
-  <b>İpucu — Tırnak İşareti:</b> Birden fazla kelimeyi tam sırayla aramak için
-  tırnak içinde yazın: <code>"Mustafa Kemal"</code>. Böylece sadece bu iki
-  kelimenin yan yana geçtiği yerleri bulur.
-</div>
-
-<div class="ipucu">
-  <b>İpucu — Eski Yazım:</b> 1920'lerin gazetesinde "İstanbul" bazen "Istanbul"
-  yazmış olabilir. Farklı yazımları da deneyin.
-</div>
-
-<div class="sayfa-sonu"></div>
-
-<h2>4. Admin Paneli Nedir?</h2>
-
-<p>
-Admin Paneli, <b>yönetici</b> tarafıdır. Sadece sistemi yönetenler kullanır.
-Normal arama yapan kişiler buraya girmek zorunda değildir.
-</p>
-
-<p>Admin Paneline girmek için:</p>
-<div class="adim">
-  <span class="adim-no">1</span>
-  Ana sayfada <b>sağ üst köşede</b> bulunan <span class="buton">Admin →</span>
-  düğmesine tıklayın.
-</div>
-
-<p>Admin Panelinde <b>4 sekme</b> vardır:</p>
-
-<table>
-  <tr>
-    <th>Sekme</th>
-    <th>Ne İşe Yarar?</th>
-  </tr>
-  <tr>
-    <td><b>Kaynaklar</b></td>
-    <td>Sisteme yeni bir gazete (Milliyet, Cumhuriyet vs.) tanımlanır</td>
-  </tr>
-  <tr>
-    <td><b>Scrape</b></td>
-    <td>Tanımlanan gazetenin tüm sayı linklerini internetten toplar</td>
-  </tr>
-  <tr>
-    <td><b>OCR İşle</b></td>
-    <td>PDF'leri aratılabilir metne dönüştürür</td>
-  </tr>
-  <tr>
-    <td><b>İstatistik</b></td>
-    <td>Kaç sayı, kaç sayfa işlendi gösterir</td>
-  </tr>
-</table>
-
-<div class="bilgi">
-  <b>Normal Kullanım Sırası:</b> Önce Kaynak ekle → sonra Scrape yap → sonra OCR
-  çalıştır → son olarak İstatistiği kontrol et.
-</div>
-
-<h2>5. Sekme 1 — Kaynaklar (Gazete Tanımlama)</h2>
-
-<p>
-Bu ekranda sisteme yeni bir gazete eklenir. Örneğin İstanbul Üniversitesi
-kütüphanesindeki Milliyet Gazetesi arşivi.
-</p>
-
-<h3>Yeni Kaynak Ekleme</h3>
-
-<div class="adim">
-  <span class="adim-no">1</span>
-  <b>Gazete Adı:</b> Kısa bir isim yazın. Örnek: <code>Milliyet</code>.
-</div>
-
-<div class="adim">
-  <span class="adim-no">2</span>
-  <b>Ana URL:</b> Arşiv sitesinin ana adresi. Örnek:
-  <code>https://nek.istanbul.edu.tr</code>.
-</div>
-
-<div class="adim">
-  <span class="adim-no">3</span>
-  <b>Index Sayfası URL:</b> Gazetenin tüm sayılarının listelendiği sayfa.
-</div>
-
-<div class="adim">
-  <span class="adim-no">4</span>
-  <b>PDF Link Selector:</b> Sayfada PDF linklerinin bulunduğu yeri belirten
-  teknik kod. Örnek: <code>table td a[href$='.pdf']</code>.
-</div>
-
-<div class="adim">
-  <span class="adim-no">5</span>
-  <b>Tarih Selector (opsiyonel):</b> Tarih bilgisinin olduğu yer. Boş
-  bırakırsanız link metni kullanılır.
-</div>
-
-<div class="adim">
-  <span class="adim-no">6</span>
-  <b>Notlar:</b> Kaynak hakkında hatırlatmalar yazabilirsiniz.
-</div>
-
-<div class="adim">
-  <span class="adim-no">7</span>
-  <span class="buton">Ekle</span> düğmesine basın.
-</div>
-
-<div class="uyari">
-  <b>Uyarı:</b> Selector kavramı tekniktir. Bilmiyorsanız, sistemi kuran kişiden
-  yardım isteyin. Yanlış selector → link bulunamaz.
-</div>
-
-<h3>Mevcut Kaynaklar</h3>
-<p>Alt kısımda eklediğiniz kaynaklar listelenir. Her kaynak için iki düğme var:</p>
-<ul>
-  <li><span class="buton">Düzenle</span> — Kaynak bilgilerini günceller.</li>
-  <li><span class="buton">Selektörü Test Et</span> — Selector'ın doğru çalışıp
-  çalışmadığını 5 örnekle gösterir.</li>
-</ul>
-
-<div class="ipucu">
-  <b>İpucu:</b> Yeni kaynak eklerken önce <b>Selektörü Test Et</b> ile deneyin.
-  Sonuç gelmezse selektör yanlıştır.
-</div>
-
-<div class="sayfa-sonu"></div>
-
-<h2>6. Sekme 2 — Scrape (Gazete Linklerini Çekme)</h2>
-
-<p>
-"Scrape" (skreyp okunur) = toplama. Bu sekmede, seçilen gazetenin tüm PDF
-linkleri internetten toplanır ve veritabanına kaydedilir.
-</p>
-
-<h3>Link Toplama</h3>
-
-<div class="adim">
-  <span class="adim-no">1</span>
-  <b>Kaynak Seç:</b> Açılır menüden gazeteyi seçin (örnek: Milliyet).
-</div>
-
-<div class="adim">
-  <span class="adim-no">2</span>
-  <span class="buton">Linkleri Çek</span> düğmesine basın.
-</div>
-
-<div class="adim">
-  <span class="adim-no">3</span>
-  <b>Bekleyin.</b> Sistem siteye gidip tüm PDF linklerini bulur. Bu 10-30 saniye
-  sürer.
-</div>
-
-<div class="adim">
-  <span class="adim-no">4</span>
-  <b>Sonuç mesajı</b> çıkar: "X link bulundu, Y yeni sayı eklendi".
-</div>
-
-<h3>Listeyi Görüntüleme</h3>
-<p>
-Alt kısımda "Son Eklenen Sayılar" tablosu vardır. Her satır bir gazete sayısıdır.
-Durum sütunu:
-</p>
-<ul>
-  <li><span style="color: #dc2626; font-weight: 700;">Bekliyor</span> — Henüz OCR yapılmadı.</li>
-  <li><span style="color: #16a34a; font-weight: 700;">İşlendi (N sayfa)</span> — OCR tamamlandı.</li>
-</ul>
-
-<h3>Silme Düğmeleri</h3>
-<div class="uyari">
-  <b>DİKKAT:</b> Bu düğmeler verileri <b>kalıcı olarak</b> siler. Geri alınamaz!
-</div>
-<ul>
-  <li><span class="buton buton-kirmizi">Tüm Sayıları Sil</span> — Bu kaynağın
-  TÜM sayılarını siler (linkler + OCR verileri).</li>
-  <li><span class="buton-turuncu buton">İşlenmişleri Sil</span> — Sadece OCR
-  yapılmış olanları siler.</li>
-</ul>
-
-<h3>Sayfalama</h3>
-<p>
-100 sayıdan fazla varsa altta sayfa numaraları çıkar. Önceki/Sonraki ile
-gezebilirsiniz.
-</p>
-
-<div class="sayfa-sonu"></div>
-
-<h2>7. Sekme 3 — OCR İşle (Metne Dönüştürme)</h2>
-
-<p>
-<b>OCR</b> = Optical Character Recognition = Bilgisayarın resmi okuyup metne
-çevirmesi. Bu en <b>önemli</b> ve en <b>uzun süren</b> adımdır.
-</p>
-
-<div class="bilgi">
-  <b>Neden Uzun Sürer?</b> Her sayfa ayrı ayrı okunur. Bir sayfa ~15-30 saniye.
-  10 sayfalık bir gazete ~3-5 dakika. 100 gazete işlemek saatler sürer.
-</div>
-
-<h3>OCR İlerleme Durumu</h3>
-<p>
-En üstte yeşil bir ilerleme çubuğu vardır. Kaç sayfa tamamlandı, ne kadar kaldı
-gösterir. Sayılar:
-</p>
-<ul>
-  <li><b style="color: #dc2626;">Bekliyor:</b> Henüz OCR yapılmamış sayfa sayısı.</li>
-  <li><b style="color: #16a34a;">Tamamlandı:</b> OCR bitmiş sayfa sayısı.</li>
-  <li><b>Toplam:</b> Kaynaktaki toplam sayı.</li>
-</ul>
-
-<h3>Toplu OCR İşlemi</h3>
-<p>
-Bekleyen sayıları otomatik sıraya koyar ve işler. Tavsiye edilen yoldur.
-</p>
-
-<div class="adim">
-  <span class="adim-no">1</span>
-  <b>Kaynak Seçin</b> (açılır menüden).
-</div>
-
-<div class="adim">
-  <span class="adim-no">2</span>
-  <b>Limit girin:</b> Kaç sayı işlenecek? Başlangıç için <code>3</code> veya
-  <code>5</code> deneyin. Sistem düzgün çalıştığını görürseniz büyütün.
-</div>
-
-<div class="adim">
-  <span class="adim-no">3</span>
-  <span class="buton buton-mor">Toplu İşle</span> düğmesine basın.
-</div>
-
-<div class="adim">
-  <span class="adim-no">4</span>
-  <b>Bekleyin.</b> Mor renkli "Toplu İşlem İlerlemesi" çubuğu hangi sayının
-  işlendiğini gösterir.
-</div>
-
-<div class="uyari">
-  <b>ÇOK ÖNEMLİ:</b> OCR çalışırken <b>tarayıcı sekmesini kapatmayın</b>!
-  Kapatırsanız işlem durur. Bilgisayarın uyumasını da engelleyin.
-</div>
-
-<h3>Manuel Sayı İşle</h3>
-<p>
-Tek bir sayı ID'si girerek zorla işletmek için. Genelde test amaçlı kullanılır.
-</p>
-
-<div class="adim">
-  <span class="adim-no">1</span>
-  <b>Sayı ID:</b> Scrape sekmesindeki listeden ID numarasını alın.
-</div>
-
-<div class="adim">
-  <span class="adim-no">2</span>
-  <span class="buton">Tekil İşle</span> düğmesine basın.
-</div>
-
-<h3>İşlenmişleri Sıfırla</h3>
-<div class="uyari">
-  <b>TEHLİKE:</b> <span class="buton-turuncu buton">Seçili Kaynağın OCR
-  Verilerini Sıfırla</span> düğmesi, o kaynaktaki tüm OCR sonuçlarını siler.
-  Gazete linkleri kalır, ama metin içerikleri silinir. Yeniden taramak gerekir
-  (saatler sürer). Kullanmadan önce <b>iki kez düşünün</b>.
-</div>
-
-<div class="sayfa-sonu"></div>
-
-<h2>8. Sekme 4 — İstatistik</h2>
-
-<p>Bu sekme sadece <b>bilgilendirme</b> içindir. Hiçbir buton yoktur.</p>
-
-<p>Dört büyük kutu:</p>
-<ul>
-  <li><b>Toplam Kaynak:</b> Sisteme kaç gazete tanımlı.</li>
-  <li><b>Toplam Sayı (Issue):</b> Tüm kaynaklarda kaç gazete sayısı var.</li>
-  <li><b>Toplam Sayfa:</b> OCR'a girmiş sayfa sayısı.</li>
-  <li><b>İşlenmiş Sayfa (OCR):</b> Başarıyla metne dönmüş sayfa sayısı (yeşil).</li>
-</ul>
-
-<p>
-Altta <b>Kaynak Bazlı Kırılım</b> tablosu — her gazete için kaç sayı ve sayfa
-olduğunu gösterir.
-</p>
-
-<div class="ipucu">
-  <b>Kullanım:</b> OCR çalıştırdıktan sonra buraya gelin. Beklediğiniz rakamlar
-  çıktı mı kontrol edin.
-</div>
-
-<h2>9. Sık Karşılaşılan Sorular</h2>
-
-<div class="sss">
-
-<p><b>S: Arama yaptım ama sonuç çıkmadı. Neden?</b></p>
-<p>
-Muhtemel sebepler:
-</p>
-<ul>
-  <li>Kelime o gazetelerde hiç geçmiyor.</li>
-  <li>OCR sırasında kelime yanlış okunmuş (eski yazımda sık olur).</li>
-  <li>O gazete sayısı henüz OCR'dan geçmemiş.</li>
-</ul>
-<p>Farklı bir kelime veya eş anlamlısıyla deneyin.</p>
-
-<p><b>S: OCR çok yavaş. Hızlandırabilir miyiz?</b></p>
-<p>
-Evet. Sistemde "paralel işlem" ayarı vardır. Aynı anda 3 sayfa birden işlenir.
-Daha hızlı olmaz çünkü sunucu sınırları var. 2500 gazete gibi büyük sayı için
-özel kurulum gerekir — yöneticiyle görüşün.
-</p>
-
-<p><b>S: PDF'i direkt okuyabilir miyim?</b></p>
-<p>
-Evet. Arama sonucuna tıkladığınızda sayfa resmi açılır. Aranan kelime sarı
-renkle işaretlidir.
-</p>
-
-<p><b>S: Yanlış bir kelime ekledim, geri alabilir miyim?</b></p>
-<p>
-Admin panelinden silebilirsiniz. Scrape sekmesindeki silme düğmelerine dikkat.
-</p>
-
-<p><b>S: Mobil telefondan çalışır mı?</b></p>
-<p>
-Ana sayfa (arama) çalışır. Admin paneli mobil için tasarlanmamıştır,
-bilgisayar kullanın.
-</p>
-
-<p><b>S: Şifre unuttum.</b></p>
-<p>
-Sistem yöneticisine başvurun.
-</p>
-
-</div>
-
-<div class="sayfa-sonu"></div>
-
-<h2>10. Sözlük (Teknik Terimler)</h2>
-
-<table>
-  <tr><th>Terim</th><th>Anlamı</th></tr>
-  <tr><td><b>OCR</b></td><td>Resmi metne çevirme işlemi (Optical Character Recognition)</td></tr>
-  <tr><td><b>PDF</b></td><td>Yaygın bir belge dosyası türü</td></tr>
-  <tr><td><b>URL</b></td><td>İnternet adresi (örn: https://...)</td></tr>
-  <tr><td><b>Scrape</b></td><td>Siteden veri toplama işlemi</td></tr>
-  <tr><td><b>Selector</b></td><td>Sayfadaki belirli bir yeri işaret eden kod</td></tr>
-  <tr><td><b>Kaynak</b></td><td>Bir gazete arşivinin tanımı</td></tr>
-  <tr><td><b>Issue</b></td><td>Bir gazete sayısı (örn: 5 Ocak 1929 Milliyet)</td></tr>
-  <tr><td><b>Page</b></td><td>Sayı içindeki tek bir sayfa</td></tr>
-  <tr><td><b>Admin</b></td><td>Yönetici</td></tr>
-  <tr><td><b>Tarayıcı</b></td><td>Chrome, Firefox gibi internet gezme programı</td></tr>
-  <tr><td><b>Veritabanı</b></td><td>Bilgilerin saklandığı dijital dolap</td></tr>
-  <tr><td><b>Cache</b></td><td>Geçici hafıza, hızlanma için</td></tr>
-  <tr><td><b>Diacritic</b></td><td>Türkçe'deki ç, ğ, ı, ö, ş, ü gibi harfler</td></tr>
-</table>
-
-<div class="bilgi" style="margin-top: 3em;">
-  <b>Teşekkürler!</b><br>
-  Bu kılavuz Gazete Arşiv sisteminin kullanımı içindir. Sorularınız olursa
-  sistem yöneticisine başvurun. İyi araştırmalar!
-</div>
-
-<div style="text-align: center; margin-top: 4em; color: #64748b; font-size: 10pt;">
-  Gazete Arşiv — Kullanım Kılavuzu v1.0<br>
-  Bu belgeyi tarayıcınızda Ctrl+P (Windows) veya Cmd+P (Mac) ile PDF olarak
-  kaydedebilirsiniz.
-</div>
+<button id="yukari" aria-label="Yukarı çık" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+(function(){
+  const cubuk = document.getElementById('okuma-cubugu');
+  const yukari = document.getElementById('yukari');
+  const baglar = document.querySelectorAll('aside.toc a');
+  const bolumler = Array.from(document.querySelectorAll('section[id]'));
+
+  function guncelle() {
+    const h = document.documentElement;
+    const oran = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+    cubuk.style.width = Math.min(100, Math.max(0, oran)) + '%';
+
+    if (h.scrollTop > 400) yukari.classList.add('goster');
+    else yukari.classList.remove('goster');
+
+    // Active TOC link
+    const y = h.scrollTop + 120;
+    let aktif = bolumler[0];
+    for (const b of bolumler) { if (b.offsetTop <= y) aktif = b; }
+    baglar.forEach(a => {
+      a.classList.toggle('aktif', a.getAttribute('href') === '#' + aktif.id);
+    });
+  }
+  document.addEventListener('scroll', guncelle, { passive: true });
+  guncelle();
+})();
+</script>
 
 </body>
 </html>
