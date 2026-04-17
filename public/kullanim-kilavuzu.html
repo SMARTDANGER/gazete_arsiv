@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Gazete Arşiv — Kullanım Kılavuzu</title>
+<style>
+  @page { size: A4; margin: 2cm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 13pt;
+    line-height: 1.6;
+    color: #1a1a1a;
+    max-width: 18cm;
+    margin: 0 auto;
+    padding: 2cm 1cm;
+    background: #fff;
+  }
+  h1 {
+    font-size: 32pt;
+    color: #4f46e5;
+    border-bottom: 3px solid #4f46e5;
+    padding-bottom: 0.3em;
+    margin-top: 0;
+  }
+  h2 {
+    font-size: 22pt;
+    color: #1e40af;
+    margin-top: 2em;
+    border-left: 6px solid #1e40af;
+    padding-left: 0.5em;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 17pt;
+    color: #312e81;
+    margin-top: 1.5em;
+    page-break-after: avoid;
+  }
+  p { margin: 0.8em 0; }
+  ol, ul { margin: 0.8em 0; padding-left: 1.8em; }
+  li { margin: 0.5em 0; }
+  .kapak {
+    text-align: center;
+    padding: 4cm 0 3cm 0;
+    page-break-after: always;
+  }
+  .kapak h1 {
+    font-size: 40pt;
+    border: none;
+    margin-bottom: 0.3em;
+  }
+  .kapak .altbaslik {
+    font-size: 18pt;
+    color: #64748b;
+    font-style: italic;
+  }
+  .kapak .kutu {
+    margin-top: 5cm;
+    padding: 1em 2em;
+    background: #eef2ff;
+    border: 2px solid #4f46e5;
+    border-radius: 12px;
+    display: inline-block;
+  }
+  .ipucu {
+    background: #fef3c7;
+    border-left: 5px solid #f59e0b;
+    padding: 0.8em 1.2em;
+    margin: 1em 0;
+    border-radius: 4px;
+  }
+  .uyari {
+    background: #fee2e2;
+    border-left: 5px solid #dc2626;
+    padding: 0.8em 1.2em;
+    margin: 1em 0;
+    border-radius: 4px;
+  }
+  .bilgi {
+    background: #dbeafe;
+    border-left: 5px solid #2563eb;
+    padding: 0.8em 1.2em;
+    margin: 1em 0;
+    border-radius: 4px;
+  }
+  .adim {
+    background: #f1f5f9;
+    padding: 1em 1.5em;
+    margin: 1em 0;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+  }
+  .adim-no {
+    display: inline-block;
+    background: #4f46e5;
+    color: #fff;
+    width: 2em;
+    height: 2em;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 2em;
+    font-weight: 700;
+    margin-right: 0.5em;
+    font-family: Arial, sans-serif;
+  }
+  code {
+    background: #f1f5f9;
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+    font-size: 11pt;
+    color: #be185d;
+  }
+  .buton {
+    display: inline-block;
+    background: #4f46e5;
+    color: #fff;
+    padding: 0.2em 0.8em;
+    border-radius: 6px;
+    font-weight: 600;
+    font-family: Arial, sans-serif;
+    font-size: 12pt;
+  }
+  .buton-turuncu { background: #ea580c; }
+  .buton-kirmizi { background: #dc2626; }
+  .buton-mor { background: #8b5cf6; }
+  .sayfa-sonu { page-break-after: always; }
+  .icindekiler {
+    background: #f8fafc;
+    padding: 1.5em 2em;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+  }
+  .icindekiler ol { padding-left: 1.5em; }
+  .icindekiler li { margin: 0.4em 0; font-size: 14pt; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 0.6em 0.8em;
+    text-align: left;
+  }
+  th { background: #e0e7ff; }
+  .sss soru {
+    display: block;
+    font-weight: 700;
+    color: #1e40af;
+    margin-top: 1em;
+  }
+  @media print {
+    body { padding: 0; }
+    h2 { page-break-before: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="kapak">
+  <h1>Gazete Arşiv</h1>
+  <div class="altbaslik">Tarihi Türk Gazetelerinde Arama Sistemi</div>
+  <div class="altbaslik" style="margin-top: 0.5em;">Kullanım Kılavuzu</div>
+  <div class="kutu">
+    <div style="font-size: 14pt; color: #4f46e5; font-weight: 700;">Her Yaş İçin Uygundur</div>
+    <div style="font-size: 12pt; margin-top: 0.3em;">Adım adım, resimli anlatım</div>
+  </div>
+</div>
+
+<h2>İçindekiler</h2>
+<div class="icindekiler">
+  <ol>
+    <li>Gazete Arşiv Nedir?</li>
+    <li>Siteye Nasıl Girilir?</li>
+    <li>Arama Sayfası — Eski Gazete Nasıl Aranır?</li>
+    <li>Admin Paneli Nedir?</li>
+    <li>Sekme 1 — Kaynaklar (Gazete Tanımlama)</li>
+    <li>Sekme 2 — Scrape (Gazete Linklerini Çekme)</li>
+    <li>Sekme 3 — OCR İşle (Metne Dönüştürme)</li>
+    <li>Sekme 4 — İstatistik</li>
+    <li>Sık Karşılaşılan Sorular</li>
+    <li>Sözlük (Teknik Terimler)</li>
+  </ol>
+</div>
+
+<h2>1. Gazete Arşiv Nedir?</h2>
+<p>
+Bu sistem, eski Türk gazetelerinin (örneğin 1929 Milliyet Gazetesi) taranmış
+PDF dosyalarını bilgisayarın okuyabildiği metne dönüştürür. Böylece yüz yıl
+önceki bir haberi tıpkı Google'da arar gibi aratabilirsiniz.
+</p>
+<p>Sistem iki ana bölümden oluşur:</p>
+<ul>
+  <li><b>Ana Sayfa (Arama):</b> Herkesin kullandığı yer. Kelime yaz, ara.</li>
+  <li><b>Admin Paneli:</b> Yönetici kısmı. Yeni gazete ekleme, tarama yapma.</li>
+</ul>
+
+<div class="bilgi">
+  <b>Kısaca:</b> Eski bir kelimeyi (mesela "tramvay") yazarsın, sistem sana o
+  kelimenin geçtiği eski gazete sayfalarını bulur.
+</div>
+
+<h2>2. Siteye Nasıl Girilir?</h2>
+
+<div class="adim">
+  <span class="adim-no">1</span>
+  <b>Tarayıcınızı açın.</b> Google Chrome, Firefox, Edge veya Safari — hepsi olur.
+</div>
+
+<div class="adim">
+  <span class="adim-no">2</span>
+  <b>Adres çubuğuna site adresini yazın</b> ve Enter tuşuna basın.
+</div>
+
+<div class="adim">
+  <span class="adim-no">3</span>
+  <b>Ana sayfa açılacak.</b> Ortada büyük "Gazete Arşiv" yazısı ve bir arama
+  kutusu göreceksiniz.
+</div>
+
+<div class="ipucu">
+  <b>İpucu:</b> Siteyi sık kullanacaksanız, tarayıcınızda yer imlerine ekleyin.
+  Chrome'da sağ üstteki ⭐ yıldıza tıklayın.
+</div>
+
+<div class="sayfa-sonu"></div>
+
+<h2>3. Arama Sayfası — Eski Gazete Nasıl Aranır?</h2>
+
+<p>Ana sayfa en basit yerdir. Üç şey vardır:</p>
+
+<ul>
+  <li><b>Arama kutusu:</b> "Aranacak kelime..." yazan yer.</li>
+  <li><b>Gazete seçici:</b> "Tüm Gazeteler" yazan açılır menü.</li>
+  <li><span class="buton">Ara</span> düğmesi.</li>
+</ul>
+
+<h3>Adım adım arama yapma</h3>
+
+<div class="adim">
+  <span class="adim-no">1</span>
+  <b>Arama kutusuna kelime yazın.</b> Örnek: <code>İstanbul</code>, <code>Atatürk</code>,
+  <code>tramvay</code>, <code>deprem</code>.
+</div>
+
+<div class="adim">
+  <span class="adim-no">2</span>
+  <b>Gazete seçin (isteğe bağlı).</b> "Tüm Gazeteler" bırakırsanız, tüm
+  kaynaklarda aranır. Belirli bir gazete seçerseniz sadece onda arar.
+</div>
+
+<div class="adim">
+  <span class="adim-no">3</span>
+  <span class="buton">Ara</span> düğmesine basın <b>veya</b> klavyeden Enter'a basın.
+</div>
+
+<div class="adim">
+  <span class="adim-no">4</span>
+  <b>Sonuçlar liste halinde gelir.</b> Her sonuca tıkladığınızda, o kelimenin
+  geçtiği sayfa sarı renkle işaretli şekilde açılır.
+</div>
+
+<div class="ipucu">
+  <b>İpucu — Tırnak İşareti:</b> Birden fazla kelimeyi tam sırayla aramak için
+  tırnak içinde yazın: <code>"Mustafa Kemal"</code>. Böylece sadece bu iki
+  kelimenin yan yana geçtiği yerleri bulur.
+</div>
+
+<div class="ipucu">
+  <b>İpucu — Eski Yazım:</b> 1920'lerin gazetesinde "İstanbul" bazen "Istanbul"
+  yazmış olabilir. Farklı yazımları da deneyin.
+</div>
+
+<div class="sayfa-sonu"></div>
+
+<h2>4. Admin Paneli Nedir?</h2>
+
+<p>
+Admin Paneli, <b>yönetici</b> tarafıdır. Sadece sistemi yönetenler kullanır.
+Normal arama yapan kişiler buraya girmek zorunda değildir.
+</p>
+
+<p>Admin Paneline girmek için:</p>
+<div class="adim">
+  <span class="adim-no">1</span>
+  Ana sayfada <b>sağ üst köşede</b> bulunan <span class="buton">Admin →</span>
+  düğmesine tıklayın.
+</div>
+
+<p>Admin Panelinde <b>4 sekme</b> vardır:</p>
+
+<table>
+  <tr>
+    <th>Sekme</th>
+    <th>Ne İşe Yarar?</th>
+  </tr>
+  <tr>
+    <td><b>Kaynaklar</b></td>
+    <td>Sisteme yeni bir gazete (Milliyet, Cumhuriyet vs.) tanımlanır</td>
+  </tr>
+  <tr>
+    <td><b>Scrape</b></td>
+    <td>Tanımlanan gazetenin tüm sayı linklerini internetten toplar</td>
+  </tr>
+  <tr>
+    <td><b>OCR İşle</b></td>
+    <td>PDF'leri aratılabilir metne dönüştürür</td>
+  </tr>
+  <tr>
+    <td><b>İstatistik</b></td>
+    <td>Kaç sayı, kaç sayfa işlendi gösterir</td>
+  </tr>
+</table>
+
+<div class="bilgi">
+  <b>Normal Kullanım Sırası:</b> Önce Kaynak ekle → sonra Scrape yap → sonra OCR
+  çalıştır → son olarak İstatistiği kontrol et.
+</div>
+
+<h2>5. Sekme 1 — Kaynaklar (Gazete Tanımlama)</h2>
+
+<p>
+Bu ekranda sisteme yeni bir gazete eklenir. Örneğin İstanbul Üniversitesi
+kütüphanesindeki Milliyet Gazetesi arşivi.
+</p>
+
+<h3>Yeni Kaynak Ekleme</h3>
+
+<div class="adim">
+  <span class="adim-no">1</span>
+  <b>Gazete Adı:</b> Kısa bir isim yazın. Örnek: <code>Milliyet</code>.
+</div>
+
+<div class="adim">
+  <span class="adim-no">2</span>
+  <b>Ana URL:</b> Arşiv sitesinin ana adresi. Örnek:
+  <code>https://nek.istanbul.edu.tr</code>.
+</div>
+
+<div class="adim">
+  <span class="adim-no">3</span>
+  <b>Index Sayfası URL:</b> Gazetenin tüm sayılarının listelendiği sayfa.
+</div>
+
+<div class="adim">
+  <span class="adim-no">4</span>
+  <b>PDF Link Selector:</b> Sayfada PDF linklerinin bulunduğu yeri belirten
+  teknik kod. Örnek: <code>table td a[href$='.pdf']</code>.
+</div>
+
+<div class="adim">
+  <span class="adim-no">5</span>
+  <b>Tarih Selector (opsiyonel):</b> Tarih bilgisinin olduğu yer. Boş
+  bırakırsanız link metni kullanılır.
+</div>
+
+<div class="adim">
+  <span class="adim-no">6</span>
+  <b>Notlar:</b> Kaynak hakkında hatırlatmalar yazabilirsiniz.
+</div>
+
+<div class="adim">
+  <span class="adim-no">7</span>
+  <span class="buton">Ekle</span> düğmesine basın.
+</div>
+
+<div class="uyari">
+  <b>Uyarı:</b> Selector kavramı tekniktir. Bilmiyorsanız, sistemi kuran kişiden
+  yardım isteyin. Yanlış selector → link bulunamaz.
+</div>
+
+<h3>Mevcut Kaynaklar</h3>
+<p>Alt kısımda eklediğiniz kaynaklar listelenir. Her kaynak için iki düğme var:</p>
+<ul>
+  <li><span class="buton">Düzenle</span> — Kaynak bilgilerini günceller.</li>
+  <li><span class="buton">Selektörü Test Et</span> — Selector'ın doğru çalışıp
+  çalışmadığını 5 örnekle gösterir.</li>
+</ul>
+
+<div class="ipucu">
+  <b>İpucu:</b> Yeni kaynak eklerken önce <b>Selektörü Test Et</b> ile deneyin.
+  Sonuç gelmezse selektör yanlıştır.
+</div>
+
+<div class="sayfa-sonu"></div>
+
+<h2>6. Sekme 2 — Scrape (Gazete Linklerini Çekme)</h2>
+
+<p>
+"Scrape" (skreyp okunur) = toplama. Bu sekmede, seçilen gazetenin tüm PDF
+linkleri internetten toplanır ve veritabanına kaydedilir.
+</p>
+
+<h3>Link Toplama</h3>
+
+<div class="adim">
+  <span class="adim-no">1</span>
+  <b>Kaynak Seç:</b> Açılır menüden gazeteyi seçin (örnek: Milliyet).
+</div>
+
+<div class="adim">
+  <span class="adim-no">2</span>
+  <span class="buton">Linkleri Çek</span> düğmesine basın.
+</div>
+
+<div class="adim">
+  <span class="adim-no">3</span>
+  <b>Bekleyin.</b> Sistem siteye gidip tüm PDF linklerini bulur. Bu 10-30 saniye
+  sürer.
+</div>
+
+<div class="adim">
+  <span class="adim-no">4</span>
+  <b>Sonuç mesajı</b> çıkar: "X link bulundu, Y yeni sayı eklendi".
+</div>
+
+<h3>Listeyi Görüntüleme</h3>
+<p>
+Alt kısımda "Son Eklenen Sayılar" tablosu vardır. Her satır bir gazete sayısıdır.
+Durum sütunu:
+</p>
+<ul>
+  <li><span style="color: #dc2626; font-weight: 700;">Bekliyor</span> — Henüz OCR yapılmadı.</li>
+  <li><span style="color: #16a34a; font-weight: 700;">İşlendi (N sayfa)</span> — OCR tamamlandı.</li>
+</ul>
+
+<h3>Silme Düğmeleri</h3>
+<div class="uyari">
+  <b>DİKKAT:</b> Bu düğmeler verileri <b>kalıcı olarak</b> siler. Geri alınamaz!
+</div>
+<ul>
+  <li><span class="buton buton-kirmizi">Tüm Sayıları Sil</span> — Bu kaynağın
+  TÜM sayılarını siler (linkler + OCR verileri).</li>
+  <li><span class="buton-turuncu buton">İşlenmişleri Sil</span> — Sadece OCR
+  yapılmış olanları siler.</li>
+</ul>
+
+<h3>Sayfalama</h3>
+<p>
+100 sayıdan fazla varsa altta sayfa numaraları çıkar. Önceki/Sonraki ile
+gezebilirsiniz.
+</p>
+
+<div class="sayfa-sonu"></div>
+
+<h2>7. Sekme 3 — OCR İşle (Metne Dönüştürme)</h2>
+
+<p>
+<b>OCR</b> = Optical Character Recognition = Bilgisayarın resmi okuyup metne
+çevirmesi. Bu en <b>önemli</b> ve en <b>uzun süren</b> adımdır.
+</p>
+
+<div class="bilgi">
+  <b>Neden Uzun Sürer?</b> Her sayfa ayrı ayrı okunur. Bir sayfa ~15-30 saniye.
+  10 sayfalık bir gazete ~3-5 dakika. 100 gazete işlemek saatler sürer.
+</div>
+
+<h3>OCR İlerleme Durumu</h3>
+<p>
+En üstte yeşil bir ilerleme çubuğu vardır. Kaç sayfa tamamlandı, ne kadar kaldı
+gösterir. Sayılar:
+</p>
+<ul>
+  <li><b style="color: #dc2626;">Bekliyor:</b> Henüz OCR yapılmamış sayfa sayısı.</li>
+  <li><b style="color: #16a34a;">Tamamlandı:</b> OCR bitmiş sayfa sayısı.</li>
+  <li><b>Toplam:</b> Kaynaktaki toplam sayı.</li>
+</ul>
+
+<h3>Toplu OCR İşlemi</h3>
+<p>
+Bekleyen sayıları otomatik sıraya koyar ve işler. Tavsiye edilen yoldur.
+</p>
+
+<div class="adim">
+  <span class="adim-no">1</span>
+  <b>Kaynak Seçin</b> (açılır menüden).
+</div>
+
+<div class="adim">
+  <span class="adim-no">2</span>
+  <b>Limit girin:</b> Kaç sayı işlenecek? Başlangıç için <code>3</code> veya
+  <code>5</code> deneyin. Sistem düzgün çalıştığını görürseniz büyütün.
+</div>
+
+<div class="adim">
+  <span class="adim-no">3</span>
+  <span class="buton buton-mor">Toplu İşle</span> düğmesine basın.
+</div>
+
+<div class="adim">
+  <span class="adim-no">4</span>
+  <b>Bekleyin.</b> Mor renkli "Toplu İşlem İlerlemesi" çubuğu hangi sayının
+  işlendiğini gösterir.
+</div>
+
+<div class="uyari">
+  <b>ÇOK ÖNEMLİ:</b> OCR çalışırken <b>tarayıcı sekmesini kapatmayın</b>!
+  Kapatırsanız işlem durur. Bilgisayarın uyumasını da engelleyin.
+</div>
+
+<h3>Manuel Sayı İşle</h3>
+<p>
+Tek bir sayı ID'si girerek zorla işletmek için. Genelde test amaçlı kullanılır.
+</p>
+
+<div class="adim">
+  <span class="adim-no">1</span>
+  <b>Sayı ID:</b> Scrape sekmesindeki listeden ID numarasını alın.
+</div>
+
+<div class="adim">
+  <span class="adim-no">2</span>
+  <span class="buton">Tekil İşle</span> düğmesine basın.
+</div>
+
+<h3>İşlenmişleri Sıfırla</h3>
+<div class="uyari">
+  <b>TEHLİKE:</b> <span class="buton-turuncu buton">Seçili Kaynağın OCR
+  Verilerini Sıfırla</span> düğmesi, o kaynaktaki tüm OCR sonuçlarını siler.
+  Gazete linkleri kalır, ama metin içerikleri silinir. Yeniden taramak gerekir
+  (saatler sürer). Kullanmadan önce <b>iki kez düşünün</b>.
+</div>
+
+<div class="sayfa-sonu"></div>
+
+<h2>8. Sekme 4 — İstatistik</h2>
+
+<p>Bu sekme sadece <b>bilgilendirme</b> içindir. Hiçbir buton yoktur.</p>
+
+<p>Dört büyük kutu:</p>
+<ul>
+  <li><b>Toplam Kaynak:</b> Sisteme kaç gazete tanımlı.</li>
+  <li><b>Toplam Sayı (Issue):</b> Tüm kaynaklarda kaç gazete sayısı var.</li>
+  <li><b>Toplam Sayfa:</b> OCR'a girmiş sayfa sayısı.</li>
+  <li><b>İşlenmiş Sayfa (OCR):</b> Başarıyla metne dönmüş sayfa sayısı (yeşil).</li>
+</ul>
+
+<p>
+Altta <b>Kaynak Bazlı Kırılım</b> tablosu — her gazete için kaç sayı ve sayfa
+olduğunu gösterir.
+</p>
+
+<div class="ipucu">
+  <b>Kullanım:</b> OCR çalıştırdıktan sonra buraya gelin. Beklediğiniz rakamlar
+  çıktı mı kontrol edin.
+</div>
+
+<h2>9. Sık Karşılaşılan Sorular</h2>
+
+<div class="sss">
+
+<p><b>S: Arama yaptım ama sonuç çıkmadı. Neden?</b></p>
+<p>
+Muhtemel sebepler:
+</p>
+<ul>
+  <li>Kelime o gazetelerde hiç geçmiyor.</li>
+  <li>OCR sırasında kelime yanlış okunmuş (eski yazımda sık olur).</li>
+  <li>O gazete sayısı henüz OCR'dan geçmemiş.</li>
+</ul>
+<p>Farklı bir kelime veya eş anlamlısıyla deneyin.</p>
+
+<p><b>S: OCR çok yavaş. Hızlandırabilir miyiz?</b></p>
+<p>
+Evet. Sistemde "paralel işlem" ayarı vardır. Aynı anda 3 sayfa birden işlenir.
+Daha hızlı olmaz çünkü sunucu sınırları var. 2500 gazete gibi büyük sayı için
+özel kurulum gerekir — yöneticiyle görüşün.
+</p>
+
+<p><b>S: PDF'i direkt okuyabilir miyim?</b></p>
+<p>
+Evet. Arama sonucuna tıkladığınızda sayfa resmi açılır. Aranan kelime sarı
+renkle işaretlidir.
+</p>
+
+<p><b>S: Yanlış bir kelime ekledim, geri alabilir miyim?</b></p>
+<p>
+Admin panelinden silebilirsiniz. Scrape sekmesindeki silme düğmelerine dikkat.
+</p>
+
+<p><b>S: Mobil telefondan çalışır mı?</b></p>
+<p>
+Ana sayfa (arama) çalışır. Admin paneli mobil için tasarlanmamıştır,
+bilgisayar kullanın.
+</p>
+
+<p><b>S: Şifre unuttum.</b></p>
+<p>
+Sistem yöneticisine başvurun.
+</p>
+
+</div>
+
+<div class="sayfa-sonu"></div>
+
+<h2>10. Sözlük (Teknik Terimler)</h2>
+
+<table>
+  <tr><th>Terim</th><th>Anlamı</th></tr>
+  <tr><td><b>OCR</b></td><td>Resmi metne çevirme işlemi (Optical Character Recognition)</td></tr>
+  <tr><td><b>PDF</b></td><td>Yaygın bir belge dosyası türü</td></tr>
+  <tr><td><b>URL</b></td><td>İnternet adresi (örn: https://...)</td></tr>
+  <tr><td><b>Scrape</b></td><td>Siteden veri toplama işlemi</td></tr>
+  <tr><td><b>Selector</b></td><td>Sayfadaki belirli bir yeri işaret eden kod</td></tr>
+  <tr><td><b>Kaynak</b></td><td>Bir gazete arşivinin tanımı</td></tr>
+  <tr><td><b>Issue</b></td><td>Bir gazete sayısı (örn: 5 Ocak 1929 Milliyet)</td></tr>
+  <tr><td><b>Page</b></td><td>Sayı içindeki tek bir sayfa</td></tr>
+  <tr><td><b>Admin</b></td><td>Yönetici</td></tr>
+  <tr><td><b>Tarayıcı</b></td><td>Chrome, Firefox gibi internet gezme programı</td></tr>
+  <tr><td><b>Veritabanı</b></td><td>Bilgilerin saklandığı dijital dolap</td></tr>
+  <tr><td><b>Cache</b></td><td>Geçici hafıza, hızlanma için</td></tr>
+  <tr><td><b>Diacritic</b></td><td>Türkçe'deki ç, ğ, ı, ö, ş, ü gibi harfler</td></tr>
+</table>
+
+<div class="bilgi" style="margin-top: 3em;">
+  <b>Teşekkürler!</b><br>
+  Bu kılavuz Gazete Arşiv sisteminin kullanımı içindir. Sorularınız olursa
+  sistem yöneticisine başvurun. İyi araştırmalar!
+</div>
+
+<div style="text-align: center; margin-top: 4em; color: #64748b; font-size: 10pt;">
+  Gazete Arşiv — Kullanım Kılavuzu v1.0<br>
+  Bu belgeyi tarayıcınızda Ctrl+P (Windows) veya Cmd+P (Mac) ile PDF olarak
+  kaydedebilirsiniz.
+</div>
+
+</body>
+</html>
