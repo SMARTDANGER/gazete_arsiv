@@ -126,6 +126,24 @@ export default function AdminDashboard() {
     }
   };
 
+  const deleteSource = async (id: number, name: string) => {
+    if (!confirm(`"${name}" kaynağı ve buna bağlı TÜM sayılar/sayfalar kalıcı olarak silinecek. Emin misiniz?`)) return;
+    if (!confirm('Son onay: Bu işlem GERİ ALINAMAZ. Devam edilsin mi?')) return;
+    try {
+      const res = await fetch(`/api/sources/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(`Silme hatası: ${data.error || res.statusText}`);
+        return;
+      }
+      if (editingId === id) { setEditingId(null); setFormData({}); }
+      if (selectedSourceId === String(id)) setSelectedSourceId('');
+      await loadSources();
+    } catch (e: any) {
+      alert(`Silme hatası: ${e.message}`);
+    }
+  };
+
   const testScraper = async (id: number) => {
     setTestLoading(true); setTestResults(null);
     try {
@@ -446,6 +464,12 @@ export default function AdminDashboard() {
                           <button className="btn-outline" style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }} onClick={() => {setEditingId(s.id); setFormData(s);}}>Düzenle</button>
                           <button className="btn-outline" style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }} onClick={() => testScraper(s.id)} disabled={testLoading}>
                             {testLoading ? '...' : 'Selektörü Test Et'}
+                          </button>
+                          <button
+                            onClick={() => deleteSource(s.id, s.name)}
+                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem', background: '#dc2626', borderColor: '#dc2626', color: '#fff' }}
+                          >
+                            Sil
                           </button>
                         </div>
                       </td>

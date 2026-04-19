@@ -48,3 +48,24 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await context.params;
+    const sid = Number(id);
+    if (!Number.isFinite(sid)) {
+      return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+    }
+
+    await sql`DELETE FROM pages WHERE issue_id IN (SELECT id FROM issues WHERE source_id = ${sid})`;
+    await sql`DELETE FROM issues WHERE source_id = ${sid}`;
+    const { rowCount } = await sql`DELETE FROM newspaper_sources WHERE id = ${sid}`;
+
+    if (!rowCount) {
+      return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+    }
+    return NextResponse.json({ deleted: rowCount });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

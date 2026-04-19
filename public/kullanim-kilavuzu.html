@@ -643,13 +643,32 @@
       <h2><span class="numara">5</span> Sekme 1 — Kaynaklar (Gazete Tanımlama)</h2>
       <p>
         Bu ekranda sisteme yeni bir gazete eklenir. Örneğin İstanbul Üniversitesi
-        kütüphanesindeki Milliyet Gazetesi arşivi.
+        kütüphanesindeki Milliyet veya Cumhuriyet Gazetesi arşivi.
       </p>
 
+      <div class="kutu bilgi">
+        <span class="simge">ℹ</span>
+        <div class="icerik">
+          <b>Örnek Gazete Arşiv Siteleri</b>
+          İstanbul Üniversitesi Nadir Eserler Kütüphanesi'nin (NEK) gazete arşivi
+          çok kullanılan bir kaynaktır. Örnek index URL'leri:
+          <ul style="margin-top: 8px;">
+            <li><b>Milliyet:</b> <code>https://nek.istanbul.edu.tr/ekos/GAZETE/gazete.php?gazete=milliyet</code></li>
+            <li><b>Cumhuriyet:</b> <code>https://nek.istanbul.edu.tr/ekos/GAZETE/gazete.php?gazete=cumhuriyet</code></li>
+          </ul>
+          Bu sitelerde <b>PDF Link Selector</b> için <code>table td a[href$='.pdf']</code> uygundur.
+        </div>
+      </div>
+
       <h3>Yeni Kaynak Ekleme</h3>
-      <div class="adim"><span class="adim-no">1</span><div><b>Gazete Adı:</b> Kısa bir isim yazın. Örnek: <code>Milliyet</code>.</div></div>
+      <div class="adim"><span class="adim-no">1</span><div><b>Gazete Adı:</b> Kısa bir isim yazın. Örnek: <code>Milliyet</code> veya <code>Cumhuriyet</code>.</div></div>
       <div class="adim"><span class="adim-no">2</span><div><b>Ana URL:</b> Arşiv sitesinin ana adresi. Örnek: <code>https://nek.istanbul.edu.tr</code>.</div></div>
-      <div class="adim"><span class="adim-no">3</span><div><b>Index Sayfası URL:</b> Gazetenin tüm sayılarının listelendiği sayfa. Örnek: <code>https://nek.istanbul.edu.tr/ekos/GAZETE/gazete.php?gazete=milliyet</code>.</div></div>
+      <div class="adim"><span class="adim-no">3</span><div><b>Index Sayfası URL:</b> Gazetenin tüm sayılarının listelendiği sayfa. Örnekler:
+        <ul style="margin-top: 6px;">
+          <li><code>https://nek.istanbul.edu.tr/ekos/GAZETE/gazete.php?gazete=milliyet</code></li>
+          <li><code>https://nek.istanbul.edu.tr/ekos/GAZETE/gazete.php?gazete=cumhuriyet</code></li>
+        </ul>
+      </div></div>
       <div class="adim"><span class="adim-no">4</span><div><b>PDF Link Selector:</b> Sayfada PDF linklerinin bulunduğu yeri belirten teknik kod. Örnek: <code>table td a[href$='.pdf']</code>.</div></div>
       <div class="adim"><span class="adim-no">5</span><div><b>Tarih Selector (opsiyonel):</b> Tarih bilgisinin olduğu yer. Boş bırakırsanız link metni kullanılır.</div></div>
       <div class="adim"><span class="adim-no">6</span><div><b>Notlar:</b> Kaynak hakkında hatırlatmalar yazabilirsiniz.</div></div>
@@ -665,11 +684,22 @@
       </div>
 
       <h3>Mevcut Kaynaklar</h3>
-      <p>Alt kısımda eklediğiniz kaynaklar listelenir. Her kaynak için iki düğme var:</p>
+      <p>Alt kısımda eklediğiniz kaynaklar listelenir. Her kaynak için üç düğme var:</p>
       <ul>
         <li><span class="buton">Düzenle</span> — Kaynak bilgilerini günceller.</li>
         <li><span class="buton">Selektörü Test Et</span> — Selector'ın doğru çalışıp çalışmadığını 5 örnekle gösterir.</li>
+        <li><span class="buton buton-kirmizi">Sil</span> — Kaynağı ve ona bağlı <b>tüm sayıları/sayfaları</b> kalıcı olarak siler. Sıfırdan başlamak istediğinizde kullanın.</li>
       </ul>
+
+      <div class="kutu uyari">
+        <span class="simge">⚠</span>
+        <div class="icerik">
+          <b>Silme Uyarısı</b>
+          <span class="buton buton-kirmizi">Sil</span> düğmesi kaynağı <b>ve</b>
+          onun altındaki tüm gazete sayılarını, OCR sonuçlarını kalıcı olarak kaldırır.
+          İşlem geri alınamaz. İki ayrı onay sorusu çıkar; her ikisini de onaylamanız gerekir.
+        </div>
+      </div>
 
       <div class="kutu ipucu">
         <span class="simge">★</span>
