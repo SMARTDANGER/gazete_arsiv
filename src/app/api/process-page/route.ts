@@ -16,6 +16,7 @@ async function ensureSchema(force = false): Promise<void> {
     await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS image_width INTEGER DEFAULT NULL`;
     await sql`ALTER TABLE pages ADD COLUMN IF NOT EXISTS image_height INTEGER DEFAULT NULL`;
     await sql`ALTER TABLE pages ADD CONSTRAINT pages_issue_page_unique UNIQUE (issue_id, page_number)`.catch(() => {});
+    await sql`ALTER TABLE issues ADD COLUMN IF NOT EXISTS ocr_dpi INTEGER DEFAULT NULL`;
     schemaReady = true;
   } catch (e) {
     console.error('ensureSchema failed:', String(e));
@@ -52,10 +53,11 @@ async function getPdfBuffer(issueId: number, pdfUrl: string): Promise<Buffer> {
 
 export async function POST(request: Request) {
   try {
-    const { issue_id, page_number } = await request.json();
+    const { issue_id, page_number, dpi: dpiRaw } = await request.json();
     if (!issue_id || !page_number) {
       return Response.json({ error: 'issue_id and page_number required' }, { status: 400 });
     }
+    const dpi = Math.max(100, Math.min(300, Number(dpiRaw) || 150));
 
     await ensureSchema();
 
@@ -73,7 +75,7 @@ export async function POST(request: Request) {
     }
 
     const page = doc.loadPage(page_number - 1);
-    const scale = 150 / 72;
+    const scale = dpi / 72;
     const matrix = mupdf.Matrix.scale(scale, scale);
     const pixmap = page.toPixmap(matrix, mupdf.ColorSpace.DeviceRGB, false, true);
     const pngBuffer = Buffer.from(pixmap.asPNG());
@@ -173,7 +175,7 @@ export async function POST(request: Request) {
     let status: 'completed' | 'partial' | 'pending' = 'pending';
     if (total > 0 && done >= total) status = 'completed';
     else if (done > 0) status = 'partial';
-    await sql`UPDATE issues SET status = ${status} WHERE id = ${issue_id}`;
+    await sql`UPDATE issues SET status = ${status}, ocr_dpi = ${dpi} WHERE id = ${issue_id}`;
 
     const remaining = Math.max(0, total - done);
     if (remaining === 0) pdfCache.delete(issue_id);

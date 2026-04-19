@@ -13,6 +13,8 @@ export async function GET(request: Request) {
        return NextResponse.json({ error: "source_id is required" }, { status: 400 });
     }
 
+    await sql`ALTER TABLE issues ADD COLUMN IF NOT EXISTS ocr_dpi INTEGER DEFAULT NULL`;
+
     // Get total count for pagination
     const { rows: countRows } = await sql`
       SELECT count(*) as total FROM issues WHERE source_id = ${source_id}
@@ -20,7 +22,8 @@ export async function GET(request: Request) {
     const totalCount = parseInt(countRows[0].total);
 
     const { rows } = await sql`
-      SELECT i.id, i.date_label, i.pdf_url, count(p.id) as pages_count
+      SELECT i.id, i.date_label, i.pdf_url, i.ocr_dpi, i.status, i.page_count,
+             count(p.id) as pages_count
       FROM issues i
       LEFT JOIN pages p ON p.issue_id = i.id
       WHERE i.source_id = ${source_id}
@@ -37,7 +40,25 @@ export async function GET(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { source_id, mode } = await request.json();
+    await sql`ALTER TABLE issues ADD COLUMN IF NOT EXISTS ocr_dpi INTEGER DEFAULT NULL`;
+    const { source_id, mode, issue_id } = await request.json();
+
+    if (mode === 'single') {
+      if (!issue_id) return NextResponse.json({ error: 'issue_id required' }, { status: 400 });
+      const iid = Number(issue_id);
+      await sql`DELETE FROM pages WHERE issue_id = ${iid}`;
+      const { rowCount } = await sql`DELETE FROM issues WHERE id = ${iid}`;
+      return NextResponse.json({ deleted: rowCount ?? 0 });
+    }
+
+    if (mode === 'reset_single') {
+      if (!issue_id) return NextResponse.json({ error: 'issue_id required' }, { status: 400 });
+      const iid = Number(issue_id);
+      await sql`DELETE FROM pages WHERE issue_id = ${iid}`;
+      const { rowCount } = await sql`UPDATE issues SET status = 'pending', page_count = NULL, ocr_dpi = NULL WHERE id = ${iid}`;
+      return NextResponse.json({ reset: rowCount ?? 0 });
+    }
+
     if (!source_id || !mode) {
       return NextResponse.json({ error: 'source_id and mode are required' }, { status: 400 });
     }

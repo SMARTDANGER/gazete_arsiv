@@ -30,6 +30,7 @@ export default function AdminDashboard() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   
   const [batchLimit, setBatchLimit] = useState(10);
+  const [ocrDpi, setOcrDpi] = useState(150);
   const [manualIssueId, setManualIssueId] = useState('');
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrResult, setOcrResult] = useState('');
@@ -57,7 +58,7 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 2 && selectedSourceId) {
+    if ((activeTab === 2 || activeTab === 3) && selectedSourceId) {
       loadIssues(selectedSourceId, currentPage);
     }
     if (activeTab === 4) {
@@ -265,7 +266,7 @@ export default function AdminDashboard() {
         try {
           const res = await fetch('/api/process-page', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ issue_id: issueId, page_number: page })
+            body: JSON.stringify({ issue_id: issueId, page_number: page, dpi: ocrDpi })
           });
           const data = await res.json();
           if (data.error) throw new Error(data.error);
@@ -344,6 +345,30 @@ export default function AdminDashboard() {
     } catch(e: any) { setOcrResult(`Hata: ${e.message}`); }
     setOcrLoading(false);
     fetchProgress();
+    if (selectedSourceId) loadIssues(selectedSourceId, currentPage);
+  };
+
+  const deleteSingleIssue = async (issueId: number, label: string, mode: 'single' | 'reset_single') => {
+    const msg = mode === 'single'
+      ? `"${label}" (ID ${issueId}) sayısı ve OCR verileri kalıcı olarak silinecek. Emin misiniz?`
+      : `"${label}" (ID ${issueId}) sayısının OCR verileri silinip 'Bekliyor' durumuna alınacak. Emin misiniz?`;
+    if (!confirm(msg)) return;
+    try {
+      const res = await fetch('/api/issues', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ issue_id: issueId, mode })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(`Hata: ${data.error || res.statusText}`);
+        return;
+      }
+      if (selectedSourceId) await loadIssues(selectedSourceId, currentPage);
+      fetchProgress();
+    } catch (e: any) {
+      alert(`Hata: ${e.message}`);
+    }
   };
 
   const resetOcr = async () => {
@@ -757,6 +782,26 @@ export default function AdminDashboard() {
                 <label>Limit (Kaç Sayı):</label>
                 <input type="number" min={1} max={100} value={batchLimit} onChange={e => setBatchLimit(parseInt(e.target.value) || 10)} style={{width:'100px'}} />
               </div>
+              <div className="mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <label>OCR Çözünürlüğü (DPI):</label>
+                  <span style={{ fontSize: '0.85rem', color: '#a78bfa', fontWeight: 700 }}>{ocrDpi} DPI</span>
+                </div>
+                <input
+                  type="range"
+                  min={100}
+                  max={300}
+                  step={10}
+                  value={ocrDpi}
+                  onChange={e => setOcrDpi(parseInt(e.target.value))}
+                  style={{ width: '100%' }}
+                />
+                <div className="flex justify-between" style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                  <span>100 (hızlı)</span>
+                  <span>150 (önerilen)</span>
+                  <span>300 (kaliteli, yavaş)</span>
+                </div>
+              </div>
               <button onClick={runBatchOcr} disabled={ocrLoading || !selectedSourceId} style={{width:'100%'}}>
                 {ocrLoading ? 'İşleniyor...' : 'Toplu İşle'}
               </button>
@@ -799,6 +844,79 @@ export default function AdminDashboard() {
                   <pre style={{ whiteSpace: 'pre-wrap' }}>{ocrResult}</pre>
                </div>
             )}
+
+            <div className="card mt-4" style={{ gridColumn: 'span 2' }}>
+              <div className="flex justify-between items-center mb-4">
+                <h3>İşlenmiş PDF'ler</h3>
+                <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+                  {issues.filter(i => parseInt(i.pages_count) > 0).length} / {totalIssues} (bu sayfa)
+                </span>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Tarih / Etiket</th>
+                    <th>Sayfa</th>
+                    <th>DPI</th>
+                    <th>Durum</th>
+                    <th>PDF</th>
+                    <th>İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {issues.filter(i => parseInt(i.pages_count) > 0).map(i => (
+                    <tr key={i.id}>
+                      <td>{i.id}</td>
+                      <td>{i.date_label}</td>
+                      <td>{i.pages_count}{i.page_count ? ` / ${i.page_count}` : ''}</td>
+                      <td>
+                        {i.ocr_dpi
+                          ? <span style={{ color: '#a78bfa', fontWeight: 600 }}>{i.ocr_dpi}</span>
+                          : <em style={{ color: '#64748b' }}>—</em>}
+                      </td>
+                      <td>
+                        {i.status === 'completed'
+                          ? <strong style={{ color: '#4ade80' }}>Tamamlandı</strong>
+                          : i.status === 'partial'
+                            ? <span style={{ color: '#fbbf24' }}>Kısmi</span>
+                            : <span style={{ color: '#94a3b8' }}>{i.status || '-'}</span>}
+                      </td>
+                      <td style={{ fontSize: '0.8rem', color: 'var(--primary-color)', wordBreak: 'break-all', maxWidth: '260px' }}>
+                        <a href={i.pdf_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary-color)' }}>
+                          Aç →
+                        </a>
+                      </td>
+                      <td>
+                        <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
+                          <button
+                            onClick={() => deleteSingleIssue(i.id, i.date_label, 'reset_single')}
+                            className="btn-outline"
+                            style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', borderColor: '#ea580c', color: '#fb923c' }}
+                            title="OCR verilerini sil, sayıyı 'Bekliyor' yap"
+                          >
+                            OCR Sıfırla
+                          </button>
+                          <button
+                            onClick={() => deleteSingleIssue(i.id, i.date_label, 'single')}
+                            style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', background: '#dc2626', borderColor: '#dc2626', color: '#fff' }}
+                            title="Sayıyı ve OCR verilerini tamamen sil"
+                          >
+                            Sil
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {issues.filter(i => parseInt(i.pages_count) > 0).length === 0 && (
+                    <tr><td colSpan={7} style={{ color: '#94a3b8' }}>Henüz işlenmiş sayı yok.</td></tr>
+                  )}
+                </tbody>
+              </table>
+              <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
+                Not: Scrape sekmesindeki sayfalama burayı da etkiler. Tüm işlenmişleri görmek için o sekmeden sayfaları gezin.
+              </p>
+            </div>
           </div>
         </div>
       )}

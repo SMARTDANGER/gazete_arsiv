@@ -126,8 +126,8 @@ export default function PageViewer({
           <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>🔍</span>
           <input
             type="range"
-            min={50}
-            max={250}
+            min={100}
+            max={300}
             step={10}
             value={zoom}
             onChange={e => setZoom(parseInt(e.target.value))}
