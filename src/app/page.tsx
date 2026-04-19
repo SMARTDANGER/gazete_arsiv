@@ -58,9 +58,18 @@ export default function Home() {
   return (
     <div className="container">
       <header className="header" style={{ textAlign: 'center', position: 'relative' }}>
-        <Link 
-          href="/admin" 
-          className="btn btn-outline" 
+        <a
+          href="/kullanim-kilavuzu.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-outline"
+          style={{ position: 'absolute', left: 0, top: 0, fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+        >
+          Nasıl Kullanılır?
+        </a>
+        <Link
+          href="/admin"
+          className="btn btn-outline"
           style={{ position: 'absolute', right: 0, top: 0, fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
         >
           Admin →
