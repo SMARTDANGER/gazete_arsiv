@@ -3,6 +3,25 @@ import { sql } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
+let schemaReady = false;
+async function ensureSchema() {
+  if (schemaReady) return;
+  await sql.query(`
+    DO $$ BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'pages' AND column_name = 'tsv'
+      ) THEN
+        ALTER TABLE pages
+          ADD COLUMN tsv tsvector
+          GENERATED ALWAYS AS (to_tsvector('turkish', COALESCE(ocr_text, ''))) STORED;
+      END IF;
+    END $$;
+  `);
+  await sql`CREATE INDEX IF NOT EXISTS pages_tsv_idx ON pages USING GIN (tsv)`;
+  schemaReady = true;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -14,6 +33,8 @@ export async function GET(request: Request) {
     if (!q) {
       return NextResponse.json({ results: [] });
     }
+
+    await ensureSchema();
 
     const sid = source_id ? Number(source_id) : null;
 
