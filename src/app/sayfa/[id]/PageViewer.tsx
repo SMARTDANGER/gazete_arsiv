@@ -145,8 +145,8 @@ export default function PageViewer({
         </div>
       </div>
 
-      <div className="grid grid-cols-2" style={{ gap: '2rem', height: '80vh' }}>
-        <div className="card" style={{ padding: 0, overflow: 'auto', position: 'relative' }}>
+      <div className="grid grid-cols-2 viewer-grid" style={{ gap: '1rem' }}>
+        <div className="card" style={{ padding: 0, overflow: 'auto', position: 'relative', height: '80vh' }}>
           <div style={{ position: 'relative', width: `${zoom}%`, minWidth: 'min-content' }}>
             <img
               ref={imgRef}
@@ -176,7 +176,7 @@ export default function PageViewer({
           </div>
         </div>
 
-        <div className="card" style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <div className="card" style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', height: '80vh' }}>
           <h3 className="mb-4" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
             Metin (OCR)
           </h3>

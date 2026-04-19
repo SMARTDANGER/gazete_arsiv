@@ -57,40 +57,42 @@ export default function Home() {
 
   return (
     <div className="container">
-      <header className="header" style={{ textAlign: 'center', position: 'relative' }}>
-        <a
-          href="/kullanim-kilavuzu.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-outline"
-          style={{ position: 'absolute', left: 0, top: 0, fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
-        >
-          Nasıl Kullanılır?
-        </a>
-        <Link
-          href="/admin"
-          className="btn btn-outline"
-          style={{ position: 'absolute', right: 0, top: 0, fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
-        >
-          Admin →
-        </Link>
+      <header className="header">
+        <div className="flex justify-between items-center flex-wrap gap-2 mb-4">
+          <a
+            href="/kullanim-kilavuzu.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-outline"
+            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+          >
+            Nasıl Kullanılır?
+          </a>
+          <Link
+            href="/admin"
+            className="btn btn-outline"
+            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+          >
+            Admin →
+          </Link>
+        </div>
         <h1>Gazete Arşiv</h1>
         <p className="subtitle">Tarihi Türk Gazetelerinde Arama</p>
       </header>
 
       <div className="card mb-8">
-        <form onSubmit={handleSearch} className="flex gap-4">
-          <input 
-            type="text" 
-            placeholder="Aranacak kelime..." 
+        <form onSubmit={handleSearch} className="flex gap-4 flex-wrap stack-mobile">
+          <input
+            type="text"
+            placeholder="Aranacak kelime..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            style={{ flex: 1 }}
+            style={{ flex: '1 1 200px', minWidth: 0 }}
           />
-          <select 
-            value={sourceId} 
+          <select
+            value={sourceId}
             onChange={(e) => setSourceId(e.target.value)}
-            style={{ width: '200px' }}
+            style={{ flex: '0 1 200px' }}
           >
             <option value="">Tüm Gazeteler</option>
             {sources.map(s => (
@@ -118,7 +120,7 @@ export default function Home() {
           {results.length === 0 ? (
             <p className="subtitle">Sonuç bulunamadı.</p>
           ) : (
-            <div className="grid grid-cols-2">
+            <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
               {results.map((res, i) => (
                 <div key={`${res.page_id}-${i}`} className="card">
                   <div className="flex justify-between items-center mb-2">

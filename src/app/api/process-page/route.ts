@@ -4,6 +4,8 @@ import sharp from 'sharp';
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
+const MAX_IMAGE_SIDE = 3500;
+
 let cachedWasm: Uint8Array | null = null;
 let cachedModel: Uint8Array | null = null;
 const pdfCache = new Map<number, Buffer>();
@@ -84,6 +86,7 @@ export async function POST(request: Request) {
     doc.destroy();
 
     const processed = await sharp(pngBuffer)
+      .resize(MAX_IMAGE_SIDE, MAX_IMAGE_SIDE, { fit: 'inside', withoutEnlargement: true })
       .grayscale()
       .normalise()
       .sharpen(1.5)

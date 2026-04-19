@@ -36,9 +36,9 @@ export default async function Page(props: {
 
   return (
     <div className="container" style={{ maxWidth: '1400px' }}>
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h2>{page.source_name} - {page.date_label}</h2>
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <div style={{ minWidth: 0 }}>
+          <h2 style={{ wordBreak: 'break-word' }}>{page.source_name} - {page.date_label}</h2>
           <p className="subtitle" style={{ textAlign: 'left', marginBottom: 0 }}>Sayfa {page.page_number}</p>
         </div>
         <Link href={q ? `/?q=${encodeURIComponent(q)}` : '/'} className="btn btn-outline">

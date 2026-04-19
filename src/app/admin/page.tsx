@@ -253,7 +253,7 @@ export default function AdminDashboard() {
     const tag = label ? `${label} (ID ${issueId})` : `Issue ${issueId}`;
     onPage?.(0, pageCount);
 
-    const CONCURRENCY = 3;
+    const CONCURRENCY = ocrDpi >= 200 ? 1 : ocrDpi >= 150 ? 2 : 3;
     let nextPage = 1;
     let done = 0;
     const errors: string[] = [];
@@ -402,7 +402,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="container">
-      <header className="header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header className="header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
         <h2>Admin Paneli</h2>
         <Link href="/" className="btn btn-outline" style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}>
           ← Ana Sayfa
@@ -790,16 +790,16 @@ export default function AdminDashboard() {
                 <input
                   type="range"
                   min={100}
-                  max={300}
+                  max={200}
                   step={10}
                   value={ocrDpi}
                   onChange={e => setOcrDpi(parseInt(e.target.value))}
-                  style={{ width: '100%' }}
+                  style={{ width: '100%', display: 'block' }}
                 />
                 <div className="flex justify-between" style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>
                   <span>100 (hızlı)</span>
                   <span>150 (önerilen)</span>
-                  <span>300 (kaliteli, yavaş)</span>
+                  <span>200 (kaliteli)</span>
                 </div>
               </div>
               <button onClick={runBatchOcr} disabled={ocrLoading || !selectedSourceId} style={{width:'100%'}}>
@@ -822,7 +822,7 @@ export default function AdminDashboard() {
             </div>
 
             <div className="card mt-4" style={{ gridColumn: 'span 2' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                   <h3 style={{ color: '#ea580c' }}>İşlenmişleri Sıfırla</h3>
                   <p className="mt-2" style={{color: '#94a3b8', fontSize: '0.9rem', maxWidth: '600px'}}>
