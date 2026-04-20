@@ -354,6 +354,10 @@ tr:hover td {
   margin-left: 0.5rem;
   font-weight: 600;
 }
+.year-group .count-badge.done {
+  background: rgba(34, 197, 94, 0.18);
+  color: #86efac;
+}
 
 .month-grid {
   display: grid;

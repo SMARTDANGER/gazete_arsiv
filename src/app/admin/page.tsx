@@ -594,21 +594,29 @@ export default function AdminDashboard() {
             ) : (
               <div>
                 {grouped.map((yg, yi) => {
-                  const totalInYear = Array.from(yg.months.values()).reduce((a, b) => a + b.length, 0);
+                  const allIssuesInYear = Array.from(yg.months.values()).flat();
+                  const totalInYear = allIssuesInYear.length;
+                  const doneInYear = allIssuesInYear.filter(isProcessed).length;
                   return (
                     <details key={yi} className="year-group" open={grouped.length <= 3}>
                       <summary>
                         <span>
                           {yg.year ?? 'Bilinmiyor'}
                           <span className="count-badge">{totalInYear}</span>
+                          <span className="count-badge done" title="İşlenmiş">✓ {doneInYear}</span>
                         </span>
                       </summary>
                       <div className="month-grid">
-                        {Array.from(yg.months.entries()).map(([m, list], mi) => (
+                        {Array.from(yg.months.entries()).map(([m, list], mi) => {
+                          const doneInMonth = list.filter(isProcessed).length;
+                          return (
                           <div key={mi} className="month-box" style={{ animationDelay: `${mi * 0.03}s` }}>
                             <div className="month-box-title">
                               <span>{m ? MONTH_NAME[m] : 'Ay yok'}</span>
-                              <span style={{ color: '#64748b' }}>{list.length}</span>
+                              <span style={{ color: '#64748b' }}>
+                                {doneInMonth > 0 && <span style={{ color: '#4ade80', fontWeight: 700 }}>✓{doneInMonth}</span>}
+                                {doneInMonth > 0 && ' / '}{list.length}
+                              </span>
                             </div>
                             <ul className="issue-compact-list">
                               {list.map(i => (
@@ -620,7 +628,7 @@ export default function AdminDashboard() {
                               ))}
                             </ul>
                           </div>
-                        ))}
+                        );})}
                       </div>
                     </details>
                   );
