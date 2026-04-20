@@ -460,6 +460,104 @@ tr:hover td {
   background: rgba(139, 92, 246, 0.2);
 }
 
+.help-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(139, 92, 246, 0.25);
+  color: #c4b5fd;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: help;
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  transition: background 0.2s, transform 0.2s;
+  outline: none;
+  user-select: none;
+}
+.help-tip:hover, .help-tip:focus-visible {
+  background: rgba(139, 92, 246, 0.5);
+  transform: scale(1.1);
+  color: #fff;
+}
+.help-tip-popup {
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-6px);
+  width: min(380px, 80vw);
+  padding: 0.85rem 1rem;
+  background: rgba(15, 23, 42, 0.98);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5), 0 0 18px rgba(139, 92, 246, 0.25);
+  color: #e2e8f0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 100;
+  white-space: normal;
+}
+.help-tip-popup::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 10px;
+  height: 10px;
+  background: rgba(15, 23, 42, 0.98);
+  border-left: 1px solid rgba(139, 92, 246, 0.4);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.4);
+}
+.help-tip-popup strong { color: #a78bfa; }
+.help-tip-popup code {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #93c5fd;
+  word-break: break-all;
+}
+.help-tip:hover .help-tip-popup,
+.help-tip:focus-visible .help-tip-popup,
+.help-tip-popup:hover {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) translateX(0);
+}
+@media (max-width: 768px) {
+  .help-tip-popup {
+    left: auto;
+    right: 0;
+    top: calc(100% + 10px);
+    transform: translateY(-6px);
+    width: min(320px, 90vw);
+  }
+  .help-tip-popup::before {
+    left: auto;
+    right: 8px;
+    top: -6px;
+    transform: rotate(45deg);
+    border-left: 1px solid rgba(139, 92, 246, 0.4);
+    border-top: 1px solid rgba(139, 92, 246, 0.4);
+    border-bottom: none;
+  }
+  .help-tip:hover .help-tip-popup,
+  .help-tip:focus-visible .help-tip-popup {
+    transform: translateY(0);
+  }
+}
+
 .month-box {
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid var(--border-color);

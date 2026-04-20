@@ -83,7 +83,6 @@ export default function AdminDashboard() {
   const [sources, setSources] = useState<Source[]>([]);
 
   const [formData, setFormData] = useState<Partial<Source>>({});
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [testResults, setTestResults] = useState<any[] | null>(null);
   const [testLoading, setTestLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -178,7 +177,7 @@ export default function AdminDashboard() {
         const data = await res.json();
         alert(`Kayıt hatası: ${data.error || res.statusText}`);
       } else {
-        setFormData({}); setEditingId(null); setShowAdvanced(false);
+        setFormData({}); setEditingId(null);
         loadSources();
       }
     } catch (e: any) { alert(`Kayıt hatası: ${e.message}`); }
@@ -473,39 +472,37 @@ export default function AdminDashboard() {
                 <input required value={formData.name || ''} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Cumhuriyet" />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: '#94a3b8' }}>Index Sayfası URL:</label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem', fontSize: '0.85rem', color: '#94a3b8' }}>
+                  Index Sayfası URL:
+                  <span className="help-tip" tabIndex={0} aria-label="Yardım">
+                    ?
+                    <span className="help-tip-popup" role="tooltip">
+                      <strong>Index Sayfası URL nedir?</strong>
+                      <br />
+                      Bir gazetenin <em>tüm sayılarının</em> listelendiği arşiv sayfasının adresi.
+                      <br /><br />
+                      <strong>Örnek:</strong>
+                      <br />
+                      <code>https://nek.istanbul.edu.tr/ekos/GAZETE/gazete.php?gazete=cumhuriyet</code>
+                      <br /><br />
+                      Sistem bu sayfadaki tüm <code>.pdf</code> linklerini otomatik bulup veritabanına ekler.
+                      Ana URL ve PDF selector otomatik türetilir; elle seçici yazmaya gerek yok.
+                      <br /><br />
+                      Daha fazla bilgi için <em>Nasıl Kullanılır?</em> kılavuzundaki <b>Kaynaklar Sekmesi</b> bölümüne bakın.
+                    </span>
+                  </span>
+                </label>
                 <input required value={formData.index_url || ''} onChange={e => setFormData({ ...formData, index_url: e.target.value })} placeholder="https://nek.istanbul.edu.tr/ekos/GAZETE/gazete.php?gazete=cumhuriyet" />
               </div>
 
-              <label className="simple-switch">
-                <input type="checkbox" checked={showAdvanced} onChange={e => setShowAdvanced(e.target.checked)} style={{ width: 'auto' }} />
-                Gelişmiş ayarlar
-              </label>
-
-              {showAdvanced && (
-                <div style={{ display: 'grid', gap: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: '#94a3b8' }}>Ana URL (base_url) — boş bırakılırsa index&apos;ten türetilir:</label>
-                    <input value={formData.base_url || ''} onChange={e => setFormData({ ...formData, base_url: e.target.value })} placeholder="https://nek.istanbul.edu.tr" />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: '#94a3b8' }}>PDF Link Selector (varsayılan: a[href$=&apos;.pdf&apos;]):</label>
-                    <input value={formData.pdf_link_selector || ''} onChange={e => setFormData({ ...formData, pdf_link_selector: e.target.value })} placeholder="a[href$='.pdf']" />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: '#94a3b8' }}>Tarih Selector (ops.):</label>
-                    <input value={formData.date_label_selector || ''} onChange={e => setFormData({ ...formData, date_label_selector: e.target.value })} placeholder="Boş = link metni" />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: '#94a3b8' }}>Notlar:</label>
-                    <textarea value={formData.notes || ''} onChange={e => setFormData({ ...formData, notes: e.target.value })} rows={2} placeholder="Notlar..." style={{ resize: 'vertical' }} />
-                  </div>
-                </div>
-              )}
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: '#94a3b8' }}>Notlar:</label>
+                <textarea value={formData.notes || ''} onChange={e => setFormData({ ...formData, notes: e.target.value })} rows={2} placeholder="Bu kaynak hakkında notlar..." style={{ resize: 'vertical' }} />
+              </div>
 
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <button type="submit">{editingId ? 'Güncelle' : 'Ekle'}</button>
-                {editingId && <button type="button" className="btn-outline" onClick={() => { setEditingId(null); setFormData({}); setShowAdvanced(false); }}>İptal</button>}
+                {editingId && <button type="button" className="btn-outline" onClick={() => { setEditingId(null); setFormData({}); }}>İptal</button>}
               </div>
             </form>
           </div>
@@ -523,7 +520,7 @@ export default function AdminDashboard() {
                       <div style={{ fontSize: '0.8rem', color: '#94a3b8', wordBreak: 'break-all', marginTop: '0.15rem' }}>{s.index_url}</div>
                     </div>
                     <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
-                      <button className="btn-outline" style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }} onClick={() => { setEditingId(s.id); setFormData(s); setShowAdvanced(true); }}>Düzenle</button>
+                      <button className="btn-outline" style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }} onClick={() => { setEditingId(s.id); setFormData(s); }}>Düzenle</button>
                       <button className="btn-outline" style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }} onClick={() => testScraper(s.id)} disabled={testLoading}>
                         {testLoading ? '...' : 'Test'}
                       </button>
