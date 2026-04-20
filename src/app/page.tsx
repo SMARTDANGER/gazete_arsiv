@@ -58,7 +58,7 @@ export default function Home() {
   return (
     <div className="container">
       <header className="header">
-        <div className="flex justify-between items-center flex-wrap gap-2 mb-4">
+        <div className="flex justify-end mb-4">
           <a
             href="/kullanim-kilavuzu.html"
             target="_blank"
@@ -68,17 +68,20 @@ export default function Home() {
           >
             Nasıl Kullanılır?
           </a>
-          <Link
-            href="/admin"
-            className="btn btn-outline"
-            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
-          >
-            Admin →
-          </Link>
         </div>
         <h1>Gazete Arşiv</h1>
         <p className="subtitle">Tarihi Türk Gazetelerinde Arama</p>
       </header>
+
+      <Link href="/admin" className="admin-banner mb-8">
+        <div className="admin-banner-inner">
+          <div>
+            <h3 className="admin-banner-title">Yönetim Paneli</h3>
+            <p className="admin-banner-sub">Kaynak ekle, arşivi tara, OCR işlemlerini yönet</p>
+          </div>
+          <span className="admin-banner-cta">Panele Git →</span>
+        </div>
+      </Link>
 
       <div className="card mb-8">
         <form onSubmit={handleSearch} className="flex gap-4 flex-wrap stack-mobile">

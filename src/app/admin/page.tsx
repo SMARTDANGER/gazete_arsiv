@@ -610,15 +610,15 @@ export default function AdminDashboard() {
                               <span>{m ? MONTH_NAME[m] : 'Ay yok'}</span>
                               <span style={{ color: '#64748b' }}>{list.length}</span>
                             </div>
-                            <div className="issue-pill-list">
+                            <ul className="issue-compact-list">
                               {list.map(i => (
-                                <a key={i.id} href={i.pdf_url} target="_blank" rel="noopener noreferrer"
-                                   className={`issue-pill ${isProcessed(i) ? 'done' : ''}`}
-                                   title={`${i.date_label} — ID ${i.id}${isProcessed(i) ? ` — ${i.pages_count} sayfa` : ' — bekliyor'}`}>
-                                  {isProcessed(i) ? '✓' : '○'} #{i.id}
-                                </a>
+                                <li key={i.id} className={`issue-compact-row ${isProcessed(i) ? 'done' : ''}`}>
+                                  <span className="ic-date">{isProcessed(i) ? '✓' : '○'} {i.date_label}</span>
+                                  <span className="ic-id">#{i.id}</span>
+                                  <a href={i.pdf_url} target="_blank" rel="noopener noreferrer" className="ic-link">Tıklayınız</a>
+                                </li>
                               ))}
-                            </div>
+                            </ul>
                           </div>
                         ))}
                       </div>
